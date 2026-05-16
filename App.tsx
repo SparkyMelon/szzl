@@ -1,12 +1,57 @@
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { runMigrations } from './lib/migrations';
+import { runSeeders } from './lib/seeders'; 
+import DebugScreen from "./components/DebugScreen"
+import RecipeListScreen from './screens/RecipeListScreen';
+import RecipeDetailScreen from './screens/RecipeDetailsScreen';
+
+type Screen =
+  | { name: 'list' }
+  | { name: 'detail'; recipeId: number };
 
 export default function App() {
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [screen, setScreen] = useState<Screen>({ name: 'list' });
+
+  useEffect(() => {
+    runMigrations()
+      .then(() => runSeeders())
+      .then(() => setReady(true))
+      .catch((e: unknown) => setError(String(e)))
+  }, []);
+
+  if (error) return <Text>Migration failed: {error}</Text>;
+  if (!ready) return <ActivityIndicator />;
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        {screen.name === 'list' && (
+          <RecipeListScreen
+            onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
+          />
+        )}
+        {screen.name === 'detail' && (
+          <RecipeDetailScreen
+            recipeId={screen.recipeId}
+            onBack={() => setScreen({ name: 'list' })}
+            onEdit={(id) => console.log('edit', id)}
+          />
+        )}
+        <StatusBar style="auto" />
+        {__DEV__ && <DebugScreen />}
+
+        {/* <View style={styles.container}>
+          <RecipeListScreen />
+          <StatusBar style="auto" />
+          <DebugScreen />
+        </View> */}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

@@ -1,0 +1,8 @@
+### TODOs
+- CRUD for recipes
+- Export recipe data, for backups
+- Sharing recipes
+- Rethink the list view, maybe we need additional groupings (breakfast, lunch, dinner)
+- Favorites?
+- Ratings?
+- Roulette, chose parameters (tags, grouping etc), then decide a random recipe
