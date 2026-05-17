@@ -3,17 +3,33 @@ This is a cookbook app.
 
 
 ## MVP remaining tasks
-- Rethink the list view. Should probably dedicate a "search" area which contains tags. Then where the tags are we can have the options for breakfast, lunch & dinner (these options need thinking about too, maybe add snack & dessert?).
-- Soft delete recipes, with a new view to see deleted recipes (maybe archive instead?).
-- Figure out how data persistance works when updating the app (Do we need to export the data at all?)
-- Recipe sharing: Just ingredients and whole recipe as different options
-- Favoriting (searchable feature)
-- Personal rating (searchable feature)
+- Clean up buttons when viewing a recipe. Icons for "back", "delete" & "edit".
+- Prep & cook time is missing from the info tab. This information isn't overly useful in my opinion, so I might want to make them optional.
+- More seed data for recipes.
+- Soft delete recipes, with a new view to see archived recipes, and an option to unarchive them.
+- Favoriting & rating (1-5 stars). Needs thinking about how we might want to search by these parameters.
+- Sort by feature (asc / desc):
+    - Alphabetical
+    - Created date
+    - Rating
+- Recipe sharing. A recipe should have a share button, which will format the recipe in text format with the following things:
+    - Title
+    - Description
+    - Ingredients
+    - Steps
+    - Info?
+- How will data persistance work between updates? Do we need to consider backing up the data?
+- Shopping list. We need a "shopping list" mode, or a modification to the list screen, where you can search recipes like the normal list view, and clicking on them will select them (multi-select).
+  A confirm button at the bottom which will create a new shopping list. We will need a shopping list view too. When going into a shopping list, we should see all recipes at the top
+  which should be a short-format list of them (collapsable?). Then a checklist of all ingredients which is interactable. Maybe add some confetti or something when everything is ticked.
+  Once a shopping list is complete, should we have a space for "completed" shopping where we can view the recipes available from the shopping list? Makes it easy to look at the recipes we've chosen.
+  Add an auto-complete feature to a shopping list & add a button to share a shopping list.
+  You should be able to delete shopping lists too, I don't think this needs to be a soft-delete.
 
 
 ## Stretch goals
-- Shopping list. Section where you choose several recipes and it creates a shopping list you can tick off.
-- Roulette, chose parameters (tags, grouping etc), then decide a random recipe
+- Roulette, chose parameters (tags, grouping etc), which will decide on as many recipes as you specify, with an easy way to convert this into a shopping list.
 
 
 ## Current task
+- Need to play with the search feature more to make sure it is working as I expect it to.
