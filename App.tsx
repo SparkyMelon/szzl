@@ -3,14 +3,16 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { runMigrations } from './lib/migrations';
-import { runSeeders } from './lib/seeders'; 
+import { runSeeders } from './lib/seeders';
 import DebugScreen from "./components/DebugScreen"
 import RecipeListScreen from './screens/RecipeListScreen';
 import RecipeDetailScreen from './screens/RecipeDetailsScreen';
+import RecipeEditScreen from './screens/RecipeEditScreen';
 
 type Screen =
   | { name: 'list' }
-  | { name: 'detail'; recipeId: number };
+  | { name: 'detail'; recipeId: number }
+  | { name: 'edit'; recipeId: number };
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -39,17 +41,18 @@ export default function App() {
           <RecipeDetailScreen
             recipeId={screen.recipeId}
             onBack={() => setScreen({ name: 'list' })}
-            onEdit={(id) => console.log('edit', id)}
+            onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
+          />
+        )}
+        {screen.name === 'edit' && (
+          <RecipeEditScreen
+            recipeId={screen.recipeId}
+            onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
+            onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
           />
         )}
         <StatusBar style="auto" />
         {__DEV__ && <DebugScreen />}
-
-        {/* <View style={styles.container}>
-          <RecipeListScreen />
-          <StatusBar style="auto" />
-          <DebugScreen />
-        </View> */}
       </SafeAreaView>
     </SafeAreaProvider>
   );

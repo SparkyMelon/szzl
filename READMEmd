@@ -1,8 +1,16 @@
-### TODOs
-- CRUD for recipes
-- Export recipe data, for backups
-- Sharing recipes
-- Rethink the list view, maybe we need additional groupings (breakfast, lunch, dinner)
-- Favorites?
-- Ratings?
+# Szzl
+This is a cookbook app.
+
+
+## MVP remaining tasks
+- Create a new recipe
+- Rethink the list view. Should probably dedicate a "search" area which contains tags. Then where the tags are we can have the options for breakfast, lunch & dinner (these options need thinking about too, maybe add snack & dessert?).
+- Figure out how data persistance works when updating the app (Do we need to export the data at all?)
+- Recipe sharing: Just ingredients and whole recipe as different options
+- Favoriting (searchable feature)
+- Personal rating (searchable feature)
+
+
+## Stretch goals
+- Shopping list. Section where you choose several recipes and it creates a shopping list you can tick off.
 - Roulette, chose parameters (tags, grouping etc), then decide a random recipe

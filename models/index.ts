@@ -5,6 +5,26 @@ export type IngredientUnit =
   | 'g' | 'kg' | 'oz' | 'lb'
   | 'unit' | 'pinch' | 'handful' | 'slice' | 'clove' | 'sprig' | 'to_taste';
 
+export const INGREDIENT_UNITS: { value: IngredientUnit; label: string }[] = [
+  { value: 'tsp',      label: 'tsp' },
+  { value: 'tbsp',     label: 'tbsp' },
+  { value: 'fl_oz',    label: 'fl oz' },
+  { value: 'cup',      label: 'cup' },
+  { value: 'ml',       label: 'ml' },
+  { value: 'l',        label: 'l' },
+  { value: 'g',        label: 'g' },
+  { value: 'kg',       label: 'kg' },
+  { value: 'oz',       label: 'oz' },
+  { value: 'lb',       label: 'lb' },
+  { value: 'unit',     label: 'unit' },
+  { value: 'pinch',    label: 'pinch' },
+  { value: 'handful',  label: 'handful' },
+  { value: 'slice',    label: 'slice' },
+  { value: 'clove',    label: 'clove' },
+  { value: 'sprig',    label: 'sprig' },
+  { value: 'to_taste', label: 'to taste' },
+];
+
 export interface Recipe {
   id: number;
   title: string;
