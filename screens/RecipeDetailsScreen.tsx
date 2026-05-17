@@ -3,13 +3,14 @@ import {
   ActivityIndicator,
   Animated,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { getRecipeById } from '../repositories/recipeRepository';
+import { deleteRecipe, getRecipeById } from '../repositories/recipeRepository';
 import type { Recipe } from '../models';
 
 const HERO_HEIGHT = 280;
@@ -33,6 +34,7 @@ interface Props {
   recipeId: number;
   onBack: () => void;
   onEdit: (id: number) => void;
+  onDelete: () => void;
 }
 
 // ── Ingredients Tab ───────────────────────────────────────────────
@@ -143,10 +145,12 @@ function InfoTab({ recipe }: { recipe: Recipe }) {
 
 // ── Main Screen ───────────────────────────────────────────────────
 
-export default function RecipeDetailScreen({ recipeId, onBack, onEdit }: Props) {
+export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete }: Props) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('ingredients');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -154,6 +158,17 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit }: Props) 
       .then(setRecipe)
       .finally(() => setLoading(false));
   }, [recipeId]);
+
+  async function handleDelete(): Promise<void> {
+    setDeleting(true);
+    try {
+      await deleteRecipe(recipeId);
+      onDelete();
+    } catch {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
 
   // Hero fades and shrinks as you scroll
   const heroOpacity = scrollY.interpolate({
@@ -187,6 +202,36 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit }: Props) 
   return (
     <View style={styles.container}>
 
+      {/* Confirm delete modal */}
+      <Modal visible={confirmDelete} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Delete recipe?</Text>
+            <Text style={styles.modalBody}>
+              "{recipe?.title}" will be permanently deleted.
+            </Text>
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setConfirmDelete(false)}
+                disabled={deleting}
+              >
+                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, styles.modalButtonDelete]}
+                onPress={handleDelete}
+                disabled={deleting}
+              >
+                <Text style={styles.modalButtonDeleteText}>
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Hero image */}
       <Animated.View style={[styles.hero, { opacity: heroOpacity, transform: [{ scale: heroScale }] }]}>
         {recipe.imageUri ? (
@@ -203,9 +248,14 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit }: Props) 
         <Pressable onPress={onBack} style={styles.headerButton}>
           <Text style={styles.headerButtonText}>←</Text>
         </Pressable>
-        <Pressable onPress={() => onEdit(recipe.id)} style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>Edit</Text>
-        </Pressable>
+        <View style={styles.headerRight}>
+          <Pressable onPress={() => setConfirmDelete(true)} style={[styles.headerButton, styles.headerButtonDanger]}>
+            <Text style={styles.headerButtonText}>Delete</Text>
+          </Pressable>
+          <Pressable onPress={() => onEdit(recipe.id)} style={styles.headerButton}>
+            <Text style={styles.headerButtonText}>Edit</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Scrollable content */}
@@ -306,16 +356,76 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     zIndex: 10,
   },
+  headerRight: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   headerButton: {
     backgroundColor: 'rgba(0,0,0,0.35)',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
+  headerButtonDanger: {
+    backgroundColor: 'rgba(180,30,30,0.6)',
+  },
   headerButtonText: {
     color: '#fff',
     fontSize: 15,
     fontWeight: '600',
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  modalBox: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111',
+    marginBottom: 8,
+  },
+  modalBody: {
+    fontSize: 15,
+    color: '#555',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#f0f0f0',
+  },
+  modalButtonCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#555',
+  },
+  modalButtonDelete: {
+    backgroundColor: '#e74c3c',
+  },
+  modalButtonDeleteText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
   },
 
   // Scroll

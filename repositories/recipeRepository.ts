@@ -172,3 +172,8 @@ export async function updateRecipe(id: number, input: RecipeUpdateInput): Promis
     );
   }
 }
+
+export async function deleteRecipe(id: number): Promise<void> {
+  const db = await getDB();
+  await db.runAsync(`DELETE FROM recipes WHERE id = ?`, [id]);
+}
