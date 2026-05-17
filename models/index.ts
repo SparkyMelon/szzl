@@ -37,6 +37,7 @@ export interface Recipe {
   ingredients?: RecipeIngredient[];
   steps?: RecipeStep[];
   tags?: Tag[];
+  categories?: Category[];
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +59,12 @@ export interface RecipeStep {
 }
 
 export interface Tag {
+  id: number;
+  name: string;
+  isDefault: boolean;
+}
+
+export interface Category {
   id: number;
   name: string;
   isDefault: boolean;

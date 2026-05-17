@@ -1,7 +1,15 @@
+export const defaultCategories = [
+  'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert', 'Side Dish', 'Drinks',
+];
+
 export const defaultTags = [
   'Vegetarian', 'Vegan', 'High Protein', 'Low Carb',
-  'Dairy Free', 'Gluten Free', 'Quick', 'Meal Prep', 'Budget Friendly',
+  'Dairy Free', 'Gluten Free', 'Quick', 'Budget Friendly', 'Spicy',
 ];
+
+export const seedCategoriesSql = defaultCategories
+  .map(name => `INSERT OR IGNORE INTO categories (name, is_default) VALUES ('${name}', 1);`)
+  .join('\n');
 
 export const seedTagsSql = defaultTags
   .map(name => `INSERT OR IGNORE INTO tags (name, is_default) VALUES ('${name}', 1);`)
@@ -22,7 +30,7 @@ export default `
     );
 
     CREATE TABLE IF NOT EXISTS recipe_ingredients (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
         recipe_id  INTEGER NOT NULL,
         name       TEXT    NOT NULL,
         quantity   TEXT    NOT NULL,
@@ -39,6 +47,20 @@ export default `
         FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS categories (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        name       TEXT    NOT NULL UNIQUE,
+        is_default INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS recipe_categories (
+        recipe_id   INTEGER NOT NULL,
+        category_id INTEGER NOT NULL,
+        PRIMARY KEY (recipe_id, category_id),
+        FOREIGN KEY (recipe_id)   REFERENCES recipes(id)    ON DELETE CASCADE,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS tags (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         name       TEXT    NOT NULL UNIQUE,
@@ -53,10 +75,13 @@ export default `
         FOREIGN KEY (tag_id)    REFERENCES tags(id)    ON DELETE CASCADE
     );
 
-    CREATE INDEX IF NOT EXISTS idx_ingredients_recipe_id ON recipe_ingredients(recipe_id);
-    CREATE INDEX IF NOT EXISTS idx_steps_recipe_id ON recipe_steps(recipe_id);
-    CREATE INDEX IF NOT EXISTS idx_recipe_tags_recipe_id ON recipe_tags(recipe_id);
-    CREATE INDEX IF NOT EXISTS idx_recipe_tags_tag_id ON recipe_tags(tag_id);
+    CREATE INDEX IF NOT EXISTS idx_ingredients_recipe_id    ON recipe_ingredients(recipe_id);
+    CREATE INDEX IF NOT EXISTS idx_steps_recipe_id          ON recipe_steps(recipe_id);
+    CREATE INDEX IF NOT EXISTS idx_recipe_categories_recipe ON recipe_categories(recipe_id);
+    CREATE INDEX IF NOT EXISTS idx_recipe_categories_cat    ON recipe_categories(category_id);
+    CREATE INDEX IF NOT EXISTS idx_recipe_tags_recipe_id    ON recipe_tags(recipe_id);
+    CREATE INDEX IF NOT EXISTS idx_recipe_tags_tag_id       ON recipe_tags(tag_id);
 
+    ${seedCategoriesSql}
     ${seedTagsSql}
 `;

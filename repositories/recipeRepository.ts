@@ -1,5 +1,5 @@
 import { getDB } from '../lib/database';
-import type { Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
+import type { Category, Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
 
 export async function getAllRecipes(): Promise<Recipe[]> {
   const db = await getDB();
@@ -12,7 +12,12 @@ export async function getAllRecipes(): Promise<Recipe[]> {
        JOIN recipe_tags rt ON rt.tag_id = t.id
        WHERE rt.recipe_id = ?`, [recipe.id]
     );
-    return { ...recipe, tags };
+    const categories = await db.getAllAsync<Category>(
+      `SELECT c.* FROM categories c
+       JOIN recipe_categories rc ON rc.category_id = c.id
+       WHERE rc.recipe_id = ?`, [recipe.id]
+    );
+    return { ...recipe, tags, categories };
   }));
 }
 
@@ -34,11 +39,20 @@ export async function getRecipeById(id: number): Promise<Recipe | null> {
      JOIN recipe_tags rt ON rt.tag_id = t.id
      WHERE rt.recipe_id = ?`, [id]
   );
+  const categories = await db.getAllAsync<Category>(
+    `SELECT c.* FROM categories c
+     JOIN recipe_categories rc ON rc.category_id = c.id
+     WHERE rc.recipe_id = ?`, [id]
+  );
 
-  return { ...recipe, ingredients, steps, tags };
+  return { ...recipe, ingredients, steps, tags, categories };
 }
 
-export async function searchRecipes(query: string, tagIds: number[]): Promise<Recipe[]> {
+export async function searchRecipes(
+  query: string,
+  tagIds: number[],
+  categoryIds: number[],
+): Promise<Recipe[]> {
   const db = await getDB();
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -46,6 +60,17 @@ export async function searchRecipes(query: string, tagIds: number[]): Promise<Re
   if (query.trim()) {
     conditions.push(`r.title LIKE ?`);
     params.push(`%${query.trim()}%`);
+  }
+
+  if (categoryIds.length > 0) {
+    conditions.push(`
+      EXISTS (
+        SELECT 1 FROM recipe_categories rc
+        WHERE rc.recipe_id = r.id
+        AND rc.category_id IN (${categoryIds.map(() => '?').join(',')})
+      )
+    `);
+    params.push(...categoryIds);
   }
 
   if (tagIds.length > 0) {
@@ -72,7 +97,12 @@ export async function searchRecipes(query: string, tagIds: number[]): Promise<Re
        JOIN recipe_tags rt ON rt.tag_id = t.id
        WHERE rt.recipe_id = ?`, [recipe.id]
     );
-    return { ...recipe, tags };
+    const categories = await db.getAllAsync<Category>(
+      `SELECT c.* FROM categories c
+       JOIN recipe_categories rc ON rc.category_id = c.id
+       WHERE rc.recipe_id = ?`, [recipe.id]
+    );
+    return { ...recipe, tags, categories };
   }));
 }
 
@@ -86,6 +116,7 @@ export interface RecipeCreateInput {
   ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
   steps: Array<{ instruction: string }>;
   tagIds: number[];
+  categoryIds: number[];
 }
 
 export async function createRecipe(input: RecipeCreateInput): Promise<number> {
@@ -121,6 +152,13 @@ export async function createRecipe(input: RecipeCreateInput): Promise<number> {
     );
   }
 
+  for (const categoryId of input.categoryIds) {
+    await db.runAsync(
+      `INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`,
+      [id, categoryId]
+    );
+  }
+
   return id;
 }
 
@@ -134,6 +172,7 @@ export interface RecipeUpdateInput {
   ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
   steps: Array<{ instruction: string }>;
   tagIds: number[];
+  categoryIds: number[];
 }
 
 export async function updateRecipe(id: number, input: RecipeUpdateInput): Promise<void> {
@@ -169,6 +208,14 @@ export async function updateRecipe(id: number, input: RecipeUpdateInput): Promis
     await db.runAsync(
       `INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`,
       [id, tagId]
+    );
+  }
+
+  await db.runAsync(`DELETE FROM recipe_categories WHERE recipe_id = ?`, [id]);
+  for (const categoryId of input.categoryIds) {
+    await db.runAsync(
+      `INSERT INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`,
+      [id, categoryId]
     );
   }
 }

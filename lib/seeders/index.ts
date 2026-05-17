@@ -1,5 +1,13 @@
 import { getDB } from '../database';
-import { seedTagsSql } from '../migrations/001_initial';
+import { seedCategoriesSql, seedTagsSql } from '../migrations/001_initial';
+
+async function getCategoryId(name: string): Promise<number | null> {
+  const db = await getDB();
+  const cat = await db.getFirstAsync<{ id: number }>(
+    `SELECT id FROM categories WHERE name = ?`, [name]
+  );
+  return cat?.id ?? null;
+}
 
 async function getTagId(name: string): Promise<number | null> {
   const db = await getDB();
@@ -21,18 +29,15 @@ async function seed(): Promise<void> {
   const eggsId = eggs.lastInsertRowId;
 
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [eggsId, 'Eggs', '4', 'unit', 0]
   );
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [eggsId, 'Butter', '1', 'tbsp', 1]
   );
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [eggsId, 'Salt', '1', 'pinch', 2]
   );
 
@@ -50,12 +55,14 @@ async function seed(): Promise<void> {
   );
 
   const vegTagId = await getTagId('Vegetarian');
-  if (vegTagId) {
-    await db.runAsync(
-      `INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`,
-      [eggsId, vegTagId]
-    );
-  }
+  if (vegTagId) await db.runAsync(
+    `INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`, [eggsId, vegTagId]
+  );
+
+  const breakfastCatId = await getCategoryId('Breakfast');
+  if (breakfastCatId) await db.runAsync(
+    `INSERT OR IGNORE INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [eggsId, breakfastCatId]
+  );
 
   // Chicken Stir Fry
   const stirFry = await db.runAsync(
@@ -66,23 +73,19 @@ async function seed(): Promise<void> {
   const stirFryId = stirFry.lastInsertRowId;
 
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [stirFryId, 'Chicken breast', '2', 'unit', 0]
   );
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [stirFryId, 'Soy sauce', '3', 'tbsp', 1]
   );
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [stirFryId, 'Mixed vegetables', '300', 'g', 2]
   );
   await db.runAsync(
-    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
     [stirFryId, 'Garlic', '2', 'clove', 3]
   );
 
@@ -104,20 +107,22 @@ async function seed(): Promise<void> {
   );
 
   const proteinTagId = await getTagId('High Protein');
-  if (proteinTagId) {
-    await db.runAsync(
-      `INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`,
-      [stirFryId, proteinTagId]
-    );
-  }
-
+  if (proteinTagId) await db.runAsync(
+    `INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`, [stirFryId, proteinTagId]
+  );
   const quickTagId = await getTagId('Quick');
-  if (quickTagId) {
-    await db.runAsync(
-      `INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`,
-      [stirFryId, quickTagId]
-    );
-  }
+  if (quickTagId) await db.runAsync(
+    `INSERT OR IGNORE INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`, [stirFryId, quickTagId]
+  );
+
+  const dinnerCatId = await getCategoryId('Dinner');
+  if (dinnerCatId) await db.runAsync(
+    `INSERT OR IGNORE INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [stirFryId, dinnerCatId]
+  );
+  const lunchCatId = await getCategoryId('Lunch');
+  if (lunchCatId) await db.runAsync(
+    `INSERT OR IGNORE INTO recipe_categories (recipe_id, category_id) VALUES (?, ?)`, [stirFryId, lunchCatId]
+  );
 }
 
 export async function runSeeders(): Promise<void> {
@@ -145,15 +150,17 @@ export async function resetAndReseed(): Promise<void> {
 
   await db.withTransactionAsync(async () => {
     await db.execAsync(`
+      DELETE FROM recipe_categories;
       DELETE FROM recipe_tags;
       DELETE FROM recipe_steps;
       DELETE FROM recipe_ingredients;
       DELETE FROM recipes;
+      DELETE FROM categories;
       DELETE FROM tags;
     `);
   });
 
-  // Re-run the initial migration so default tags are restored
+  await db.execAsync(seedCategoriesSql);
   await db.execAsync(seedTagsSql);
 
   await db.withTransactionAsync(seed);
