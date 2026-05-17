@@ -3,7 +3,8 @@ This is a cookbook app.
 
 
 ## MVP remaining tasks
-- Rethink the list view. Should probably dedicate a "search" area which contains tags. Then where the tags are we can have the options for breakfast, lunch & dinner (these options need thinking about too, maybe add snack & dessert?).  
+- Rethink the list view. Should probably dedicate a "search" area which contains tags. Then where the tags are we can have the options for breakfast, lunch & dinner (these options need thinking about too, maybe add snack & dessert?).
+- Soft delete recipes, with a new view to see deleted recipes (maybe archive instead?).
 - Figure out how data persistance works when updating the app (Do we need to export the data at all?)
 - Recipe sharing: Just ingredients and whole recipe as different options
 - Favoriting (searchable feature)
@@ -16,5 +17,3 @@ This is a cookbook app.
 
 
 ## Current task
-- Deleting a recipe. It stays on the recipe page after deletion, it should navigate back to the homepage.
-- Deleting a recipe should be a soft-delete, and there should be a way of viewing deleted recipes, so you can bring them back.

@@ -174,12 +174,12 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
         actions={[
           {
             label: 'New recipe',
-            icon: '✚',
+            icon: 'plus',
             onPress: onCreateRecipe,
           },
           ...(__DEV__ ? [{
             label: 'Dev mode',
-            icon: '🛠',
+            icon: 'wrench' as const,
             onPress: onOpenDevMode,
           }] : []),
         ]}

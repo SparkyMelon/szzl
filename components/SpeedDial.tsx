@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -6,14 +6,153 @@ import {
   View,
 } from 'react-native';
 
+// ── Icon components ───────────────────────────────────────────────
+// All icons are drawn with Views so they're consistent, crisp, and
+// always white — no emoji rendering quirks across platforms.
+
+export function IconPlus() {
+  return (
+    <View style={iconStyles.container}>
+      <View style={[iconStyles.bar, iconStyles.horizontal]} />
+      <View style={[iconStyles.bar, iconStyles.vertical]} />
+    </View>
+  );
+}
+
+export function IconWrench() {
+  return (
+    <View style={iconStyles.container}>
+      {/* Three slider lines */}
+      <View style={iconStyles.sliderRow}>
+        <View style={iconStyles.sliderDot} />
+        <View style={iconStyles.sliderLine} />
+      </View>
+      <View style={[iconStyles.sliderRow, iconStyles.sliderRowMid]}>
+        <View style={iconStyles.sliderLine} />
+        <View style={iconStyles.sliderDot} />
+      </View>
+      <View style={iconStyles.sliderRow}>
+        <View style={iconStyles.sliderDotSmall} />
+        <View style={iconStyles.sliderLine} />
+      </View>
+    </View>
+  );
+}
+
+export function IconClose() {
+  return (
+    <View style={iconStyles.container}>
+      <View style={[iconStyles.bar, iconStyles.diagA]} />
+      <View style={[iconStyles.bar, iconStyles.diagB]} />
+    </View>
+  );
+}
+
+export function IconDots() {
+  return (
+    <View style={iconStyles.dotsRow}>
+      <View style={iconStyles.dot} />
+      <View style={iconStyles.dot} />
+      <View style={iconStyles.dot} />
+    </View>
+  );
+}
+
+const W = 22;
+
+const iconStyles = StyleSheet.create({
+  container: {
+    width: W,
+    height: W,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bar: {
+    position: 'absolute',
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
+  horizontal: {
+    width: W * 0.8,
+    height: 2.5,
+  },
+  vertical: {
+    width: 2.5,
+    height: W * 0.8,
+  },
+  diagA: {
+    width: W * 0.72,
+    height: 2.5,
+    transform: [{ rotate: '45deg' }],
+  },
+  diagB: {
+    width: W * 0.72,
+    height: 2.5,
+    transform: [{ rotate: '-45deg' }],
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: W * 0.85,
+    marginVertical: 1.5,
+  },
+  sliderRowMid: {
+    flexDirection: 'row-reverse',
+  },
+  sliderLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: '#fff',
+    borderRadius: 1,
+  },
+  sliderDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#fff',
+    marginHorizontal: 3,
+  },
+  sliderDotSmall: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#fff',
+    marginHorizontal: 3,
+    opacity: 0,  // keeps spacing symmetric on the third row
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#fff',
+  },
+});
+
+// ── SpeedDial ─────────────────────────────────────────────────────
+
+export type SpeedDialIconType = 'plus' | 'wrench';
+
 export interface SpeedDialAction {
   label: string;
-  icon: string;
+  icon: SpeedDialIconType;
   onPress: () => void;
 }
 
 interface Props {
   actions: SpeedDialAction[];
+}
+
+function renderIcon(icon: SpeedDialIconType): ReactNode {
+  switch (icon) {
+    case 'plus':   return <IconPlus />;
+    case 'wrench': return <IconWrench />;
+  }
 }
 
 export default function SpeedDial({ actions }: Props) {
@@ -26,7 +165,6 @@ export default function SpeedDial({ actions }: Props) {
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {/* Action buttons — rendered bottom-to-top so first action is nearest the FAB */}
       {open && (
         <View style={styles.actionsContainer}>
           {[...actions].reverse().map((action, index) => (
@@ -36,19 +174,18 @@ export default function SpeedDial({ actions }: Props) {
                 style={({ pressed }) => [styles.actionButton, pressed && styles.buttonPressed]}
                 onPress={() => handleActionPress(action)}
               >
-                <Text style={styles.actionIcon}>{action.icon}</Text>
+                {renderIcon(action.icon)}
               </Pressable>
             </View>
           ))}
         </View>
       )}
 
-      {/* Main "..." / close FAB */}
       <Pressable
         style={({ pressed }) => [styles.fab, pressed && styles.buttonPressed]}
         onPress={() => setOpen(prev => !prev)}
       >
-        <Text style={styles.fabText}>{open ? '✕' : '•••'}</Text>
+        {open ? <IconClose /> : <IconDots />}
       </Pressable>
     </View>
   );
@@ -99,9 +236,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  actionIcon: {
-    fontSize: 20,
-  },
   fab: {
     width: 52,
     height: 52,
@@ -114,12 +248,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
-  },
-  fabText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '700',
-    letterSpacing: 1,
   },
   buttonPressed: {
     opacity: 0.75,
