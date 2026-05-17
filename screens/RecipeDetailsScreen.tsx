@@ -34,7 +34,7 @@ interface Props {
   recipeId: number;
   onBack: () => void;
   onEdit: (id: number) => void;
-  onDelete: () => void;
+  onDelete: (title: string) => void;
 }
 
 // ── Ingredients Tab ───────────────────────────────────────────────
@@ -163,7 +163,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
     setDeleting(true);
     try {
       await deleteRecipe(recipeId);
-      onDelete();
+      onDelete(recipe.title);
     } catch {
       setDeleting(false);
       setConfirmDelete(false);

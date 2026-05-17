@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Animated, StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { runMigrations } from './lib/migrations';
 import { runSeeders } from './lib/seeders';
@@ -21,6 +21,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
   const [debugVisible, setDebugVisible] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     runMigrations()
@@ -28,6 +30,16 @@ export default function App() {
       .then(() => setReady(true))
       .catch((e: unknown) => setError(String(e)))
   }, []);
+
+  function showToast(message: string): void {
+    setToast(message);
+    toastOpacity.setValue(0);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start(() => setToast(null));
+  }
 
   if (error) return <Text>Migration failed: {error}</Text>;
   if (!ready) return <ActivityIndicator />;
@@ -47,6 +59,10 @@ export default function App() {
             recipeId={screen.recipeId}
             onBack={() => setScreen({ name: 'list' })}
             onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
+            onDelete={(title) => {
+              setScreen({ name: 'list' });
+              showToast(`"${title}" deleted`);
+            }}
           />
         )}
         {screen.name === 'edit' && (
@@ -69,6 +85,11 @@ export default function App() {
             onClose={() => setDebugVisible(false)}
           />
         )}
+        {toast && (
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+            <Text style={styles.toastText}>{toast}</Text>
+          </Animated.View>
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -78,5 +99,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: '#111',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  toastText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
