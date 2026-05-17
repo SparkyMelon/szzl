@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { createRecipe } from '../repositories/recipeRepository';
+import { getAllCategories } from '../repositories/categoryRepository';
 import { getAllTags } from '../repositories/tagRepository';
-import type { Effort, IngredientUnit, Tag } from '../models';
+import type { Category, Effort, IngredientUnit, Tag } from '../models';
 import { INGREDIENT_UNITS } from '../models';
 
 interface IngredientDraft {
@@ -54,10 +55,15 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   const [steps, setSteps] = useState<StepDraft[]>([]);
 
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
 
   useEffect(() => {
-    getAllTags().then(setAllTags);
+    Promise.all([getAllTags(), getAllCategories()]).then(([tags, categories]) => {
+      setAllTags(tags);
+      setAllCategories(categories);
+    });
   }, []);
 
   function addIngredient(): void {
@@ -94,6 +100,12 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
     );
   }
 
+  function toggleCategory(categoryId: number): void {
+    setSelectedCategoryIds(prev =>
+      prev.includes(categoryId) ? prev.filter(id => id !== categoryId) : [...prev, categoryId]
+    );
+  }
+
   async function handleSave(): Promise<void> {
     if (!title.trim()) {
       setError('Title is required');
@@ -120,6 +132,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
           .filter(s => s.instruction.trim())
           .map(s => ({ instruction: s.instruction.trim() })),
         tagIds: selectedTagIds,
+        categoryIds: selectedCategoryIds,
       });
       onSave(id);
     } catch {
@@ -224,6 +237,28 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
             />
           </View>
         </View>
+
+        {allCategories.length > 0 && (
+          <>
+            <Text style={styles.label}>Categories</Text>
+            <View style={styles.tagsWrap}>
+              {allCategories.map(category => {
+                const active = selectedCategoryIds.includes(category.id);
+                return (
+                  <Pressable
+                    key={category.id}
+                    style={[styles.tagChip, active && styles.tagChipActive]}
+                    onPress={() => toggleCategory(category.id)}
+                  >
+                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                      {category.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         {allTags.length > 0 && (
           <>

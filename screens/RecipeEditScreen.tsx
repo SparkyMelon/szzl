@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { getRecipeById, updateRecipe } from '../repositories/recipeRepository';
+import { getAllCategories } from '../repositories/categoryRepository';
 import { getAllTags } from '../repositories/tagRepository';
-import type { Effort, IngredientUnit, Tag } from '../models';
+import type { Category, Effort, IngredientUnit, Tag } from '../models';
 import { INGREDIENT_UNITS } from '../models';
 
 interface IngredientDraft {
@@ -60,11 +61,13 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
 
   // Tags
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
 
   useEffect(() => {
-    Promise.all([getRecipeById(recipeId), getAllTags()])
-      .then(([recipe, tags]) => {
+    Promise.all([getRecipeById(recipeId), getAllTags(), getAllCategories()])
+      .then(([recipe, tags, categories]) => {
         if (!recipe) {
           setError('Recipe not found');
           return;
@@ -87,7 +90,9 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           (recipe.steps ?? []).map(s => ({ key: nextKey(), instruction: s.instruction }))
         );
         setAllTags(tags);
+        setAllCategories(categories);
         setSelectedTagIds((recipe.tags ?? []).map(t => t.id));
+        setSelectedCategoryIds((recipe.categories ?? []).map(c => c.id));
       })
       .catch(() => setError('Failed to load recipe'))
       .finally(() => setLoading(false));
@@ -132,7 +137,11 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
     );
   }
-
+  function toggleCategory(categoryId: number): void {
+    setSelectedCategoryIds(prev =>
+      prev.includes(categoryId) ? prev.filter(id => id !== categoryId) : [...prev, categoryId]
+    );
+  }
   // ── Save ───────────────────────────────────────────────────────
 
   async function handleSave(): Promise<void> {
@@ -161,6 +170,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           .filter(s => s.instruction.trim())
           .map(s => ({ instruction: s.instruction.trim() })),
         tagIds: selectedTagIds,
+        categoryIds: selectedCategoryIds,
       });
       onSave(recipeId);
     } catch {
@@ -278,6 +288,28 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
             />
           </View>
         </View>
+
+        {allCategories.length > 0 && (
+          <>
+            <Text style={styles.label}>Categories</Text>
+            <View style={styles.tagsWrap}>
+              {allCategories.map(category => {
+                const active = selectedCategoryIds.includes(category.id);
+                return (
+                  <Pressable
+                    key={category.id}
+                    style={[styles.tagChip, active && styles.tagChipActive]}
+                    onPress={() => toggleCategory(category.id)}
+                  >
+                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                      {category.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        )}
 
         {/* ── Tags ── */}
         {allTags.length > 0 && (
