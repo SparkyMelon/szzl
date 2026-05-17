@@ -14,8 +14,12 @@ interface TableData {
   rows: Record<string, unknown>[];
 }
 
-export default function DebugScreen() {
-  const [visible, setVisible] = useState(false);
+interface Props {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export default function DebugScreen({ visible, onClose }: Props) {
   const [tables, setTables] = useState<TableData[]>([]);
   const [selectedTable, setSelectedTable] = useState<TableData | null>(null);
   const [version, setVersion] = useState<number>(0);
@@ -53,11 +57,6 @@ export default function DebugScreen() {
 
   return (
     <>
-      {/* Floating debug button */}
-      <TouchableOpacity style={styles.fab} onPress={() => setVisible(true)}>
-        <Text style={styles.fabText}>🛠</Text>
-      </TouchableOpacity>
-
       <Modal visible={visible} animationType="slide">
         <View style={styles.container}>
 
@@ -71,7 +70,7 @@ export default function DebugScreen() {
               <Text style={styles.title}>Debug</Text>
             )}
             <TouchableOpacity onPress={() => {
-              setVisible(false);
+              onClose();
               setSelectedTable(null);
             }}>
               <Text style={styles.close}>✕</Text>
@@ -123,21 +122,6 @@ export default function DebugScreen() {
 }
 
 const styles = StyleSheet.create({
-  fab: {
-    position: 'absolute',
-    bottom: 40,
-    right: 20,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#333',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 999,
-  },
-  fabText: {
-    fontSize: 20,
-  },
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',

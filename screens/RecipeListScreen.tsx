@@ -13,6 +13,7 @@ import {
 import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
 import type { Recipe, Tag } from '../models';
+import SpeedDial from '../components/SpeedDial';
 
 const EFFORT_LABELS: Record<string, string> = {
   easy: 'Easy',
@@ -75,9 +76,11 @@ function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }
 
 interface Props {
   onSelectRecipe: (id: number) => void;
+  onCreateRecipe: () => void;
+  onOpenDevMode: () => void;
 }
 
-export default function RecipeListScreen({ onSelectRecipe }: Props) {
+export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpenDevMode }: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
@@ -165,6 +168,22 @@ export default function RecipeListScreen({ onSelectRecipe }: Props) {
           )}
         />
       )}
+
+      {/* Speed dial FAB */}
+      <SpeedDial
+        actions={[
+          {
+            label: 'New recipe',
+            icon: '✚',
+            onPress: onCreateRecipe,
+          },
+          ...(__DEV__ ? [{
+            label: 'Dev mode',
+            icon: '🛠',
+            onPress: onOpenDevMode,
+          }] : []),
+        ]}
+      />
 
     </View>
   );

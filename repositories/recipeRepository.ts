@@ -76,6 +76,54 @@ export async function searchRecipes(query: string, tagIds: number[]): Promise<Re
   }));
 }
 
+export interface RecipeCreateInput {
+  title: string;
+  description: string | null;
+  effort: 'easy' | 'medium' | 'hard' | null;
+  prepTime: number | null;
+  cookTime: number | null;
+  servings: number | null;
+  ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
+  steps: Array<{ instruction: string }>;
+  tagIds: number[];
+}
+
+export async function createRecipe(input: RecipeCreateInput): Promise<number> {
+  const db = await getDB();
+
+  const result = await db.runAsync(
+    `INSERT INTO recipes (title, description, effort, prep_time, cook_time, servings, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+    [input.title, input.description, input.effort, input.prepTime, input.cookTime, input.servings]
+  );
+
+  const id = result.lastInsertRowId as number;
+
+  for (let i = 0; i < input.ingredients.length; i++) {
+    const ing = input.ingredients[i];
+    await db.runAsync(
+      `INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, sort_order) VALUES (?, ?, ?, ?, ?)`,
+      [id, ing.name, ing.quantity, ing.unit, i]
+    );
+  }
+
+  for (let i = 0; i < input.steps.length; i++) {
+    await db.runAsync(
+      `INSERT INTO recipe_steps (recipe_id, instruction, sort_order) VALUES (?, ?, ?)`,
+      [id, input.steps[i].instruction, i]
+    );
+  }
+
+  for (const tagId of input.tagIds) {
+    await db.runAsync(
+      `INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`,
+      [id, tagId]
+    );
+  }
+
+  return id;
+}
+
 export interface RecipeUpdateInput {
   title: string;
   description: string | null;
