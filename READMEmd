@@ -4,8 +4,6 @@ This is a cookbook app.
 `npx expo start --clear`
 
 ## MVP remaining tasks
-
-- Prep & cook time is missing from the info tab. This information isn't overly useful in my opinion, so I might want to make them optional.
 - More seed data for recipes.
 - Soft delete recipes, with a new view to see archived recipes, and an option to unarchive them.
 - Favoriting & rating (1-5 stars). Needs thinking about how we might want to search by these parameters.

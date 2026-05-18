@@ -1,10 +1,19 @@
 import { getDB } from '../lib/database';
 import type { Category, Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
 
+const RECIPE_COLUMNS = `
+  id, title, description, effort, servings,
+  prep_time AS prepTime,
+  cook_time AS cookTime,
+  image_uri AS imageUri,
+  created_at AS createdAt,
+  updated_at AS updatedAt
+`;
+
 export async function getAllRecipes(): Promise<Recipe[]> {
   const db = await getDB();
   const recipes = await db.getAllAsync<Recipe>(
-    `SELECT * FROM recipes ORDER BY created_at DESC`
+    `SELECT ${RECIPE_COLUMNS} FROM recipes ORDER BY created_at DESC`
   );
   return Promise.all(recipes.map(async (recipe) => {
     const tags = await db.getAllAsync<Tag>(
@@ -24,7 +33,7 @@ export async function getAllRecipes(): Promise<Recipe[]> {
 export async function getRecipeById(id: number): Promise<Recipe | null> {
   const db = await getDB();
   const recipe = await db.getFirstAsync<Recipe>(
-    `SELECT * FROM recipes WHERE id = ?`, [id]
+    `SELECT ${RECIPE_COLUMNS} FROM recipes WHERE id = ?`, [id]
   );
   if (!recipe) return null;
 
@@ -87,7 +96,7 @@ export async function searchRecipes(
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const recipes = await db.getAllAsync<Recipe>(
-    `SELECT r.* FROM recipes r ${where} ORDER BY r.created_at DESC`,
+    `SELECT ${RECIPE_COLUMNS} FROM recipes r ${where} ORDER BY r.created_at DESC`,
     params
   );
 
