@@ -244,8 +244,8 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
 
       <SpeedDial
         actions={[
-          { label: 'New recipe', icon: 'plus', onPress: onCreateRecipe },
-          ...(__DEV__ ? [{ label: 'Dev mode', icon: 'wrench' as const, onPress: onOpenDevMode }] : []),
+          { label: 'New recipe', icon: 'add', onPress: onCreateRecipe },
+          ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings-outline' as const, onPress: onOpenDevMode }] : []),
         ]}
       />
     </View>

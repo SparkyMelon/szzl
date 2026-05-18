@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { deleteRecipe, getRecipeById } from '../repositories/recipeRepository';
 import type { Recipe } from '../models';
 
@@ -170,7 +171,6 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
     }
   }
 
-  // Hero fades and shrinks as you scroll
   const heroOpacity = scrollY.interpolate({
     inputRange: [0, HERO_HEIGHT / 2],
     outputRange: [1, 0],
@@ -245,15 +245,24 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
 
       {/* Floating header */}
       <View style={styles.header}>
-        <Pressable onPress={onBack} style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>←</Text>
+        <Pressable
+          onPress={onBack}
+          style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
+        >
+          <Ionicons name="chevron-back" size={22} color="#fff" />
         </Pressable>
         <View style={styles.headerRight}>
-          <Pressable onPress={() => setConfirmDelete(true)} style={[styles.headerButton, styles.headerButtonDanger]}>
-            <Text style={styles.headerButtonText}>Delete</Text>
+          <Pressable
+            onPress={() => setConfirmDelete(true)}
+            style={({ pressed }) => [styles.headerButton, styles.headerButtonDanger, pressed && styles.headerButtonPressed]}
+          >
+            <Ionicons name="trash-outline" size={20} color="#fff" />
           </Pressable>
-          <Pressable onPress={() => onEdit(recipe.id)} style={styles.headerButton}>
-            <Text style={styles.headerButtonText}>Edit</Text>
+          <Pressable
+            onPress={() => onEdit(recipe.id)}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
+          >
+            <Ionicons name="pencil-outline" size={20} color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -268,19 +277,15 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
         )}
         scrollEventThrottle={16}
       >
-        {/* Spacer to push content below hero */}
         <View style={{ height: HERO_HEIGHT - 32 }} />
 
-        {/* Content card */}
         <View style={styles.card}>
 
-          {/* Title & description */}
           <Text style={styles.title}>{recipe.title}</Text>
           {recipe.description && (
             <Text style={styles.description}>{recipe.description}</Text>
           )}
 
-          {/* Tabs */}
           <View style={styles.tabs}>
             {(['ingredients', 'steps', 'info'] as Tab[]).map(tab => (
               <Pressable
@@ -295,7 +300,6 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
             ))}
           </View>
 
-          {/* Tab content */}
           {activeTab === 'ingredients' && <IngredientsTab recipe={recipe} />}
           {activeTab === 'steps' && <StepsTab recipe={recipe} />}
           {activeTab === 'info' && <InfoTab recipe={recipe} />}
@@ -358,21 +362,21 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   headerButton: {
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerButtonDanger: {
     backgroundColor: 'rgba(180,30,30,0.6)',
   },
-  headerButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
+  headerButtonPressed: {
+    opacity: 0.7,
   },
 
   // Modal
