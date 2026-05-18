@@ -11,13 +11,7 @@ This is a cookbook app.
     - Alphabetical
     - Created date
     - Rating
-- Recipe sharing. A recipe should have a share button, which will format the recipe in text format with the following things:
-    - Title
-    - Description
-    - Ingredients
-    - Steps
-    - Info?
-- How will data persistance work between updates? Do we need to consider backing up the data?
+- Export/back up data, with a feature to import?
 - Shopping list. We need a "shopping list" mode, or a modification to the list screen, where you can search recipes like the normal list view, and clicking on them will select them (multi-select).
   A confirm button at the bottom which will create a new shopping list. We will need a shopping list view too. When going into a shopping list, we should see all recipes at the top
   which should be a short-format list of them (collapsable?). Then a checklist of all ingredients which is interactable. Maybe add some confetti or something when everything is ticked.

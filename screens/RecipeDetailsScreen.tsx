@@ -5,7 +5,7 @@ import {
   Image,
   Modal,
   Pressable,
-  ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -161,6 +161,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
   }, [recipeId]);
 
   async function handleDelete(): Promise<void> {
+    if (!recipe) return;
     setDeleting(true);
     try {
       await deleteRecipe(recipeId);
@@ -169,6 +170,49 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
       setDeleting(false);
       setConfirmDelete(false);
     }
+  }
+
+  function formatRecipeForShare(recipe: Recipe): string {
+    const lines: string[] = [];
+
+    lines.push(recipe.title);
+    if (recipe.description) {
+      lines.push('', recipe.description);
+    }
+
+    if (recipe.ingredients && recipe.ingredients.length) {
+      lines.push('', 'Ingredients:');
+      recipe.ingredients.forEach((ing) => {
+        lines.push(`- ${ing.name}: ${ing.quantity}${ing.unit ? ` ${ing.unit}` : ''}`);
+      });
+    }
+
+    if (recipe.steps && recipe.steps.length) {
+      lines.push('', 'Steps:');
+      recipe.steps.forEach((step, index) => {
+        lines.push(`${index + 1}. ${step.instruction}`);
+      });
+    }
+
+    const infoLines: string[] = [];
+    if (recipe.effort) infoLines.push(`Effort: ${EFFORT_LABELS[recipe.effort]}`);
+    if (recipe.prepTime != null) infoLines.push(`Prep: ${recipe.prepTime}m`);
+    if (recipe.cookTime != null) infoLines.push(`Cook: ${recipe.cookTime}m`);
+    if (recipe.servings != null) infoLines.push(`Servings: ${recipe.servings}`);
+    if (recipe.tags && recipe.tags.length) infoLines.push(`Tags: ${recipe.tags.map((tag) => tag.name).join(', ')}`);
+    if (recipe.categories && recipe.categories.length) infoLines.push(`Categories: ${recipe.categories.map((category) => category.name).join(', ')}`);
+
+    if (infoLines.length) {
+      lines.push('', 'Info:', ...infoLines.map((line) => `- ${line}`));
+    }
+
+    return lines.join('\n');
+  }
+
+  async function handleShare(): Promise<void> {
+    if (!recipe) return;
+    const message = formatRecipeForShare(recipe);
+    await Share.share({ title: recipe.title, message });
   }
 
   const heroOpacity = scrollY.interpolate({
@@ -257,6 +301,12 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
             style={({ pressed }) => [styles.headerButton, styles.headerButtonDanger, pressed && styles.headerButtonPressed]}
           >
             <Ionicons name="trash-outline" size={20} color="#fff" />
+          </Pressable>
+          <Pressable
+            onPress={handleShare}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
+          >
+            <Ionicons name="share-outline" size={20} color="#fff" />
           </Pressable>
           <Pressable
             onPress={() => onEdit(recipe.id)}
