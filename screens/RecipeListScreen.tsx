@@ -4,6 +4,8 @@ import {
   Animated,
   FlatList,
   Image,
+  Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,6 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
@@ -79,10 +82,25 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
 
   const searchPanelHeight = useRef(new Animated.Value(0)).current;
   const searchInputRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     getAllTags().then(setTags);
     getAllCategories().then(setCategories);
+  }, []);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -231,7 +249,7 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
           keyExtractor={item => String(item.id)}
           numColumns={2}
           columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={[styles.grid, { paddingBottom: insets.bottom + 24 + keyboardHeight }]}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
             <RecipeCard recipe={item} onPress={() => onSelectRecipe(item.id)} themeStyles={themeStyles} />

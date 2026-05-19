@@ -4,7 +4,7 @@ This is a cookbook app.
 `npx expo start --clear`
 
 ## MVP remaining tasks
-- Dark mode.
+- Dark mode. BUG: missing dark mode on edit, maybe create too
 - Soft delete recipes, with a new view to see archived recipes, and an option to unarchive them.
 - Favoriting & rating (1-5 stars). Needs thinking about how we might want to search by these parameters.
 - Sort by feature (asc / desc):

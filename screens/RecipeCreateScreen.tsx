@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -141,7 +143,12 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    >
+      <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={onBack} style={styles.headerButton}>
@@ -155,7 +162,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
 
         {error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -349,7 +356,8 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         </Pressable>
 
       </ScrollView>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
