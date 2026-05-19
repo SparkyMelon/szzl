@@ -4,11 +4,12 @@ import { ActivityIndicator, Animated, StyleSheet, Text } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { runMigrations } from './lib/migrations';
 import { runSeeders } from './lib/seeders';
-import DebugScreen from "./components/DebugScreen"
+import DebugScreen from './components/DebugScreen';
 import RecipeListScreen from './screens/RecipeListScreen';
 import RecipeDetailScreen from './screens/RecipeDetailsScreen';
 import RecipeEditScreen from './screens/RecipeEditScreen';
 import RecipeCreateScreen from './screens/RecipeCreateScreen';
+import { ThemeProvider } from './lib/theme';
 
 type Screen =
   | { name: 'list' }
@@ -28,7 +29,7 @@ export default function App() {
     runMigrations()
       .then(() => runSeeders())
       .then(() => setReady(true))
-      .catch((e: unknown) => setError(String(e)))
+      .catch((e: unknown) => setError(String(e)));
   }, []);
 
   function showToast(message: string): void {
@@ -45,53 +46,55 @@ export default function App() {
   if (!ready) return <ActivityIndicator />;
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        {screen.name === 'list' && (
-          <RecipeListScreen
-            onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
-            onCreateRecipe={() => setScreen({ name: 'create' })}
-            onOpenDevMode={() => setDebugVisible(true)}
-          />
-        )}
-        {screen.name === 'detail' && (
-          <RecipeDetailScreen
-            recipeId={screen.recipeId}
-            onBack={() => setScreen({ name: 'list' })}
-            onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
-            onDelete={(title) => {
-              setScreen({ name: 'list' });
-              showToast(`"${title}" deleted`);
-            }}
-          />
-        )}
-        {screen.name === 'edit' && (
-          <RecipeEditScreen
-            recipeId={screen.recipeId}
-            onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
-            onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
-          />
-        )}
-        {screen.name === 'create' && (
-          <RecipeCreateScreen
-            onBack={() => setScreen({ name: 'list' })}
-            onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
-          />
-        )}
-        <StatusBar style="auto" />
-        {__DEV__ && (
-          <DebugScreen
-            visible={debugVisible}
-            onClose={() => setDebugVisible(false)}
-          />
-        )}
-        {toast && (
-          <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
-            <Text style={styles.toastText}>{toast}</Text>
-          </Animated.View>
-        )}
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container}>
+          {screen.name === 'list' && (
+            <RecipeListScreen
+              onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
+              onCreateRecipe={() => setScreen({ name: 'create' })}
+              onOpenDevMode={() => setDebugVisible(true)}
+            />
+          )}
+          {screen.name === 'detail' && (
+            <RecipeDetailScreen
+              recipeId={screen.recipeId}
+              onBack={() => setScreen({ name: 'list' })}
+              onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
+              onDelete={(title) => {
+                setScreen({ name: 'list' });
+                showToast(`"${title}" deleted`);
+              }}
+            />
+          )}
+          {screen.name === 'edit' && (
+            <RecipeEditScreen
+              recipeId={screen.recipeId}
+              onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
+              onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
+            />
+          )}
+          {screen.name === 'create' && (
+            <RecipeCreateScreen
+              onBack={() => setScreen({ name: 'list' })}
+              onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
+            />
+          )}
+          <StatusBar style="auto" />
+          {__DEV__ && (
+            <DebugScreen
+              visible={debugVisible}
+              onClose={() => setDebugVisible(false)}
+            />
+          )}
+          {toast && (
+            <Animated.View style={[styles.toast, { opacity: toastOpacity }]}> 
+              <Text style={styles.toastText}>{toast}</Text>
+            </Animated.View>
+          )}
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
 

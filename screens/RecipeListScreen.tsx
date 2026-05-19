@@ -16,33 +16,27 @@ import { getAllTags } from '../repositories/tagRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import type { Category, Recipe, Tag } from '../models';
 import SpeedDial from '../components/SpeedDial';
-
-const EFFORT_LABELS: Record<string, string> = {
-  easy: 'Easy', medium: 'Medium', hard: 'Hard',
-};
-const EFFORT_COLOURS: Record<string, string> = {
-  easy: '#2ecc71', medium: '#f39c12', hard: '#e74c3c',
-};
+import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 
 // ── Recipe Card ───────────────────────────────────────────────────
 
-function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }) {
+function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress: () => void; themeStyles: Record<string, any> }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [styles.card, themeStyles.card, pressed && styles.cardPressed]}
       onPress={onPress}
     >
       <View style={styles.cardImage}>
         {recipe.imageUri ? (
           <Image source={{ uri: recipe.imageUri }} style={styles.image} />
         ) : (
-          <View style={styles.imagePlaceholder}>
+          <View style={[styles.imagePlaceholder, themeStyles.imagePlaceholder]}>
             <Text style={styles.imagePlaceholderText}>🍽</Text>
           </View>
         )}
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{recipe.title}</Text>
+        <Text style={[styles.cardTitle, themeStyles.cardTitle]} numberOfLines={2}>{recipe.title}</Text>
         {recipe.effort && (
           <View style={[styles.effortBadge, { backgroundColor: EFFORT_COLOURS[recipe.effort] + '22' }]}>
             <Text style={[styles.effortText, { color: EFFORT_COLOURS[recipe.effort] }]}>
@@ -53,8 +47,8 @@ function RecipeCard({ recipe, onPress }: { recipe: Recipe; onPress: () => void }
         {recipe.categories && recipe.categories.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagRow}>
             {recipe.categories.map(cat => (
-              <View key={cat.id} style={styles.tag}>
-                <Text style={styles.tagText}>{cat.name}</Text>
+              <View key={cat.id} style={[styles.tag, themeStyles.tag]}>
+                <Text style={[styles.tagText, themeStyles.tagText]}>{cat.name}</Text>
               </View>
             ))}
           </ScrollView>
@@ -81,6 +75,7 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { themeName, theme, toggleTheme } = useTheme();
 
   const searchPanelHeight = useRef(new Animated.Value(0)).current;
   const searchInputRef = useRef<TextInput>(null);
@@ -140,13 +135,15 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
     outputRange: [0, 0, 1],
   });
 
+  const themeStyles = getThemeStyles(theme);
+
   const isFiltering = selectedCategoryIds.length > 0 || selectedTagIds.length > 0 || query.trim().length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, themeStyles.container]}>
 
       {/* ── Category strip ── */}
-      <View style={styles.categoryBar}>
+      <View style={[styles.categoryBar, themeStyles.categoryBar]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -158,9 +155,9 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
               <Pressable
                 key={cat.id}
                 onPress={() => toggleCategory(cat.id)}
-                style={[styles.categoryChip, active && styles.categoryChipActive]}
+                style={[styles.categoryChip, themeStyles.categoryChip, active && styles.categoryChipActive, active && themeStyles.categoryChipActive]}
               >
-                <Text style={[styles.categoryChipText, active && styles.categoryChipTextActive]}>
+                <Text style={[styles.categoryChipText, themeStyles.categoryChipText, active && styles.categoryChipTextActive, active && themeStyles.categoryChipTextActive]}>
                   {cat.name}
                 </Text>
               </Pressable>
@@ -170,26 +167,26 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
       </View>
 
       {/* ── Search bar ── */}
-      <View style={styles.searchRow}>
+      <View style={[styles.searchRow, themeStyles.searchRow]}>
         {searchOpen ? (
           <View style={styles.searchInputRow}>
             <TextInput
               ref={searchInputRef}
-              style={styles.searchInput}
+              style={[styles.searchInput, themeStyles.searchInput]}
               placeholder="Search recipes..."
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.placeholderText}
               value={query}
               onChangeText={setQuery}
               returnKeyType="search"
             />
             <Pressable onPress={closeSearch} style={styles.searchCancelButton}>
-              <Text style={styles.searchCancelText}>Cancel</Text>
+              <Text style={[styles.searchCancelText, themeStyles.searchCancelText]}>Cancel</Text>
             </Pressable>
           </View>
         ) : (
-          <Pressable style={styles.searchPlaceholder} onPress={openSearch}>
-            <Text style={styles.searchPlaceholderIcon}>⌕</Text>
-            <Text style={styles.searchPlaceholderText}>
+          <Pressable style={[styles.searchPlaceholder, themeStyles.searchPlaceholder]} onPress={openSearch}>
+            <Text style={[styles.searchPlaceholderIcon, themeStyles.searchPlaceholderIcon]}>⌕</Text>
+            <Text style={[styles.searchPlaceholderText, themeStyles.searchPlaceholderText]}>
               {isFiltering ? 'Filtering…' : 'Search recipes…'}
             </Text>
           </Pressable>
@@ -197,8 +194,8 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
       </View>
 
       {/* ── Tag panel (visible when search open) ── */}
-      <Animated.View style={[styles.tagPanel, { maxHeight: tagPanelMaxHeight, opacity: tagPanelOpacity }]}>
-        <Text style={styles.tagPanelLabel}>Filter by tag</Text>
+      <Animated.View style={[styles.tagPanel, themeStyles.tagPanel, { maxHeight: tagPanelMaxHeight, opacity: tagPanelOpacity }]}>
+        <Text style={[styles.tagPanelLabel, themeStyles.tagPanelLabel]}>Filter by tag</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -210,9 +207,9 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
               <Pressable
                 key={tag.id}
                 onPress={() => toggleTag(tag.id)}
-                style={[styles.tagChip, active && styles.tagChipActive]}
+                style={[styles.tagChip, themeStyles.tagChip, active && styles.tagChipActive, active && themeStyles.tagChipActive]}
               >
-                <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
                   {tag.name}
                 </Text>
               </Pressable>
@@ -226,7 +223,7 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
         <ActivityIndicator style={styles.loader} />
       ) : recipes.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No recipes found</Text>
+          <Text style={[styles.emptyText, themeStyles.emptyText]}>No recipes found</Text>
         </View>
       ) : (
         <FlatList
@@ -237,13 +234,18 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
           contentContainerStyle={styles.grid}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <RecipeCard recipe={item} onPress={() => onSelectRecipe(item.id)} />
+            <RecipeCard recipe={item} onPress={() => onSelectRecipe(item.id)} themeStyles={themeStyles} />
           )}
         />
       )}
 
       <SpeedDial
         actions={[
+          {
+            label: themeName === 'light' ? 'Dark mode' : 'Light mode',
+            icon: themeName === 'light' ? 'moon' : 'sunny',
+            onPress: toggleTheme,
+          },
           { label: 'New recipe', icon: 'add', onPress: onCreateRecipe },
           ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings-outline' as const, onPress: onOpenDevMode }] : []),
         ]}

@@ -11,6 +11,7 @@ import { Picker } from '@react-native-picker/picker';
 import { createRecipe } from '../repositories/recipeRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import { getAllTags } from '../repositories/tagRepository';
+import { EFFORT_COLOURS, EFFORT_LABELS } from '../lib/theme';
 import type { Category, Effort, IngredientUnit, Tag } from '../models';
 import { INGREDIENT_UNITS } from '../models';
 
@@ -32,8 +33,6 @@ interface Props {
 }
 
 const EFFORT_OPTIONS: Effort[] = ['easy', 'medium', 'hard'];
-const EFFORT_LABELS: Record<Effort, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
-const EFFORT_COLOURS: Record<Effort, string> = { easy: '#2ecc71', medium: '#f39c12', hard: '#e74c3c' };
 
 let draftKeyCounter = 0;
 function nextKey(): string {

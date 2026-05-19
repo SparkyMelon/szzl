@@ -12,22 +12,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { deleteRecipe, getRecipeById } from '../repositories/recipeRepository';
+import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Recipe } from '../models';
 
 const HERO_HEIGHT = 280;
 const HEADER_HEIGHT = 60;
-
-const EFFORT_LABELS: Record<string, string> = {
-  easy: 'Easy',
-  medium: 'Medium',
-  hard: 'Hard',
-};
-
-const EFFORT_COLOURS: Record<string, string> = {
-  easy: '#2ecc71',
-  medium: '#f39c12',
-  hard: '#e74c3c',
-};
 
 type Tab = 'ingredients' | 'steps' | 'info';
 
@@ -40,7 +29,7 @@ interface Props {
 
 // ── Ingredients Tab ───────────────────────────────────────────────
 
-function IngredientsTab({ recipe }: { recipe: Recipe }) {
+function IngredientsTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<string, any> }) {
   if (!recipe.ingredients?.length) {
     return <Text style={styles.emptyTab}>No ingredients added yet</Text>;
   }
@@ -48,9 +37,9 @@ function IngredientsTab({ recipe }: { recipe: Recipe }) {
   return (
     <View style={styles.tabContent}>
       {recipe.ingredients.map((ing, i) => (
-        <View key={ing.id} style={[styles.ingredientRow, i % 2 === 0 && styles.ingredientRowAlt]}>
-          <Text style={styles.ingredientName}>{ing.name}</Text>
-          <Text style={styles.ingredientAmount}>
+        <View key={ing.id} style={[styles.ingredientRow, i % 2 === 0 && styles.ingredientRowAlt, i % 2 === 0 && themeStyles.ingredientRowAlt]}>
+          <Text style={[styles.ingredientName, themeStyles.ingredientName]}>{ing.name}</Text>
+          <Text style={[styles.ingredientAmount, themeStyles.ingredientAmount]}>
             {ing.quantity}{ing.unit ? ` ${ing.unit}` : ''}
           </Text>
         </View>
@@ -61,7 +50,7 @@ function IngredientsTab({ recipe }: { recipe: Recipe }) {
 
 // ── Steps Tab ─────────────────────────────────────────────────────
 
-function StepsTab({ recipe }: { recipe: Recipe }) {
+function StepsTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<string, any> }) {
   if (!recipe.steps?.length) {
     return <Text style={styles.emptyTab}>No steps added yet</Text>;
   }
@@ -70,10 +59,10 @@ function StepsTab({ recipe }: { recipe: Recipe }) {
     <View style={styles.tabContent}>
       {recipe.steps.map((step, i) => (
         <View key={step.id} style={styles.stepRow}>
-          <View style={styles.stepNumber}>
-            <Text style={styles.stepNumberText}>{i + 1}</Text>
+          <View style={[styles.stepNumber, themeStyles.stepNumber]}>
+            <Text style={[styles.stepNumberText, themeStyles.stepNumberText]}>{i + 1}</Text>
           </View>
-          <Text style={styles.stepInstruction}>{step.instruction}</Text>
+          <Text style={[styles.stepInstruction, themeStyles.stepInstruction]}>{step.instruction}</Text>
         </View>
       ))}
     </View>
@@ -82,34 +71,34 @@ function StepsTab({ recipe }: { recipe: Recipe }) {
 
 // ── Info Tab ──────────────────────────────────────────────────────
 
-function InfoTab({ recipe }: { recipe: Recipe }) {
+function InfoTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<string, any> }) {
   return (
     <View style={styles.tabContent}>
 
       {/* Stats row */}
       <View style={styles.statsRow}>
         {recipe.prepTime != null && (
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{recipe.prepTime}m</Text>
-            <Text style={styles.statLabel}>Prep</Text>
+          <View style={[styles.statBox, themeStyles.statBox]}>
+            <Text style={[styles.statValue, themeStyles.statValue]}>{recipe.prepTime}m</Text>
+            <Text style={[styles.statLabel, themeStyles.statLabel]}>Prep</Text>
           </View>
         )}
         {recipe.cookTime != null && (
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{recipe.cookTime}m</Text>
-            <Text style={styles.statLabel}>Cook</Text>
+          <View style={[styles.statBox, themeStyles.statBox]}>
+            <Text style={[styles.statValue, themeStyles.statValue]}>{recipe.cookTime}m</Text>
+            <Text style={[styles.statLabel, themeStyles.statLabel]}>Cook</Text>
           </View>
         )}
         {recipe.prepTime != null && recipe.cookTime != null && (
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{recipe.prepTime + recipe.cookTime}m</Text>
-            <Text style={styles.statLabel}>Total</Text>
+          <View style={[styles.statBox, themeStyles.statBox]}>
+            <Text style={[styles.statValue, themeStyles.statValue]}>{recipe.prepTime + recipe.cookTime}m</Text>
+            <Text style={[styles.statLabel, themeStyles.statLabel]}>Total</Text>
           </View>
         )}
         {recipe.servings != null && (
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{recipe.servings}</Text>
-            <Text style={styles.statLabel}>Servings</Text>
+          <View style={[styles.statBox, themeStyles.statBox]}>
+            <Text style={[styles.statValue, themeStyles.statValue]}>{recipe.servings}</Text>
+            <Text style={[styles.statLabel, themeStyles.statLabel]}>Servings</Text>
           </View>
         )}
       </View>
@@ -117,9 +106,9 @@ function InfoTab({ recipe }: { recipe: Recipe }) {
       {/* Effort */}
       {recipe.effort && (
         <View style={styles.infoSection}>
-          <Text style={styles.infoSectionTitle}>Effort</Text>
-          <View style={[styles.effortBadge, { backgroundColor: EFFORT_COLOURS[recipe.effort] + '22' }]}>
-            <Text style={[styles.effortText, { color: EFFORT_COLOURS[recipe.effort] }]}>
+          <Text style={[styles.infoSectionTitle, themeStyles.infoSectionTitle]}>Effort</Text>
+          <View style={[styles.effortBadge, { backgroundColor: EFFORT_COLOURS[recipe.effort] + '22' }]}> 
+            <Text style={[styles.effortText, { color: EFFORT_COLOURS[recipe.effort] }]}> 
               {EFFORT_LABELS[recipe.effort]}
             </Text>
           </View>
@@ -129,11 +118,11 @@ function InfoTab({ recipe }: { recipe: Recipe }) {
       {/* Tags */}
       {recipe.tags && recipe.tags.length > 0 && (
         <View style={styles.infoSection}>
-          <Text style={styles.infoSectionTitle}>Tags</Text>
+          <Text style={[styles.infoSectionTitle, themeStyles.infoSectionTitle]}>Tags</Text>
           <View style={styles.tagsWrap}>
             {recipe.tags.map(tag => (
-              <View key={tag.id} style={styles.tag}>
-                <Text style={styles.tagText}>{tag.name}</Text>
+              <View key={tag.id} style={[styles.tag, themeStyles.tag]}>
+                <Text style={[styles.tagText, themeStyles.tagText]}>{tag.name}</Text>
               </View>
             ))}
           </View>
@@ -152,6 +141,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
   const [activeTab, setActiveTab] = useState<Tab>('ingredients');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { theme } = useTheme();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -227,9 +217,11 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
     extrapolate: 'clamp',
   });
 
+  const themeStyles = getThemeStyles(theme);
+
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, themeStyles.container]}>
         <ActivityIndicator />
       </View>
     );
@@ -237,30 +229,30 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
 
   if (!recipe) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.emptyTab}>Recipe not found</Text>
+      <View style={[styles.centered, themeStyles.container]}>
+        <Text style={[styles.emptyTab, { color: theme.textSecondary }]}>Recipe not found</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, themeStyles.container]}>
 
       {/* Confirm delete modal */}
       <Modal visible={confirmDelete} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Delete recipe?</Text>
-            <Text style={styles.modalBody}>
+          <View style={[styles.modalBox, themeStyles.modalBox]}>
+            <Text style={[styles.modalTitle, themeStyles.modalTitle]}>Delete recipe?</Text>
+            <Text style={[styles.modalBody, themeStyles.modalBody]}>
               "{recipe?.title}" will be permanently deleted.
             </Text>
             <View style={styles.modalButtons}>
               <Pressable
-                style={[styles.modalButton, styles.modalButtonCancel]}
+                style={[styles.modalButton, styles.modalButtonCancel, themeStyles.modalButtonCancel]}
                 onPress={() => setConfirmDelete(false)}
                 disabled={deleting}
               >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
+                <Text style={[styles.modalButtonCancelText, themeStyles.modalButtonCancelText]}>Cancel</Text>
               </Pressable>
               <Pressable
                 style={[styles.modalButton, styles.modalButtonDelete]}
@@ -281,7 +273,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
         {recipe.imageUri ? (
           <Image source={{ uri: recipe.imageUri }} style={styles.heroImage} />
         ) : (
-          <View style={styles.heroPlaceholder}>
+          <View style={[styles.heroPlaceholder, themeStyles.heroPlaceholder]}>
             <Text style={styles.heroPlaceholderText}>🍽</Text>
           </View>
         )}
@@ -329,30 +321,30 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
       >
         <View style={{ height: HERO_HEIGHT - 32 }} />
 
-        <View style={styles.card}>
+<View style={[styles.card, themeStyles.card]}>
 
-          <Text style={styles.title}>{recipe.title}</Text>
+          <Text style={[styles.title, themeStyles.title]}>{recipe.title}</Text>
           {recipe.description && (
-            <Text style={styles.description}>{recipe.description}</Text>
+            <Text style={[styles.description, themeStyles.description]}>{recipe.description}</Text>
           )}
 
-          <View style={styles.tabs}>
+          <View style={[styles.tabs, themeStyles.tabs]}>
             {(['ingredients', 'steps', 'info'] as Tab[]).map(tab => (
               <Pressable
                 key={tab}
                 style={[styles.tab, activeTab === tab && styles.tabActive]}
                 onPress={() => setActiveTab(tab)}
               >
-                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+                <Text style={[styles.tabText, themeStyles.tabText, activeTab === tab && styles.tabTextActive]}>
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </Text>
               </Pressable>
             ))}
           </View>
 
-          {activeTab === 'ingredients' && <IngredientsTab recipe={recipe} />}
-          {activeTab === 'steps' && <StepsTab recipe={recipe} />}
-          {activeTab === 'info' && <InfoTab recipe={recipe} />}
+          {activeTab === 'ingredients' && <IngredientsTab recipe={recipe} themeStyles={themeStyles} />}
+          {activeTab === 'steps' && <StepsTab recipe={recipe} themeStyles={themeStyles} />}
+          {activeTab === 'info' && <InfoTab recipe={recipe} themeStyles={themeStyles} />}
 
         </View>
       </Animated.ScrollView>

@@ -6,10 +6,11 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../lib/theme';
 
 // ── SpeedDial ─────────────────────────────────────────────────────
 
-export type SpeedDialIconType = 'add' | 'settings-outline';
+export type SpeedDialIconType = 'add' | 'settings-outline' | 'sunny' | 'moon';
 
 export interface SpeedDialAction {
   label: string;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function SpeedDial({ actions }: Props) {
+  const { theme } = useTheme();
   const [open, setOpen] = useState(false);
 
   function handleActionPress(action: SpeedDialAction): void {
@@ -35,12 +37,12 @@ export default function SpeedDial({ actions }: Props) {
         <View style={styles.actionsContainer}>
           {[...actions].reverse().map((action, index) => (
             <View key={index} style={styles.actionRow}>
-              <Text style={styles.actionLabel}>{action.label}</Text>
+              <Text style={[styles.actionLabel, { color: theme.text, backgroundColor: theme.surface }]}>{action.label}</Text>
               <Pressable
-                style={({ pressed }) => [styles.actionButton, pressed && styles.buttonPressed]}
+                style={({ pressed }) => [styles.actionButton, { backgroundColor: theme.fab }, pressed && styles.buttonPressed]}
                 onPress={() => handleActionPress(action)}
               >
-                <Ionicons name={action.icon} size={22} color="#fff" />
+                <Ionicons name={action.icon} size={22} color={theme.fabIcon} />
               </Pressable>
             </View>
           ))}
@@ -48,10 +50,10 @@ export default function SpeedDial({ actions }: Props) {
       )}
 
       <Pressable
-        style={({ pressed }) => [styles.fab, pressed && styles.buttonPressed]}
+        style={({ pressed }) => [styles.fab, { backgroundColor: theme.fab }, pressed && styles.buttonPressed]}
         onPress={() => setOpen(prev => !prev)}
       >
-        <Ionicons name={open ? 'close' : 'ellipsis-horizontal'} size={24} color="#fff" />
+        <Ionicons name={open ? 'close' : 'ellipsis-horizontal'} size={24} color={theme.fabIcon} />
       </Pressable>
     </View>
   );
