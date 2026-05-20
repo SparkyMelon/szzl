@@ -37,6 +37,7 @@ interface Props {
 const EFFORT_OPTIONS: Effort[] = ['easy', 'medium', 'hard'];
 
 let draftKeyCounter = 0;
+
 function nextKey(): string {
   return String(++draftKeyCounter);
 }
@@ -44,21 +45,19 @@ function nextKey(): string {
 export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [effort, setEffort] = useState<Effort | null>(null);
   const [prepTime, setPrepTime] = useState('');
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState('');
-
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [steps, setSteps] = useState<StepDraft[]>([]);
-
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+
   const { theme } = useTheme();
   const themeStyles = getThemeStyles(theme);
   const inputStyle = [styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }];
@@ -149,10 +148,9 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, themeStyles.container]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      <View style={[styles.container, themeStyles.container]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <Pressable onPress={onBack} style={styles.headerButton}>
@@ -167,7 +165,6 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
-
         {error && <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>}
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Title *</Text>
@@ -261,7 +258,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
                     style={[styles.tagChip, { backgroundColor: theme.surface, borderColor: theme.border }, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                     onPress={() => toggleCategory(category.id)}
                   >
-                    <Text style={[styles.tagChipText, { color: theme.textSecondary }, active && { color: theme.surface }]}> 
+                    <Text style={[styles.tagChipText, { color: theme.textSecondary }, active && { color: theme.surface }]}>
                       {category.name}
                     </Text>
                   </Pressable>
@@ -283,7 +280,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
                     style={[styles.tagChip, { backgroundColor: theme.surface, borderColor: theme.border }, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                     onPress={() => toggleTag(tag.id)}
                   >
-                    <Text style={[styles.tagChipText, { color: theme.textSecondary }, active && { color: theme.surface }]}> 
+                    <Text style={[styles.tagChipText, { color: theme.textSecondary }, active && { color: theme.surface }]}>
                       {tag.name}
                     </Text>
                   </Pressable>
@@ -352,9 +349,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         <Pressable style={[styles.addButton, { borderColor: theme.border }]} onPress={addStep}>
           <Text style={[styles.addButtonText, { color: theme.textSecondary }]}>+ Add step</Text>
         </Pressable>
-
       </ScrollView>
-      </View>
     </KeyboardAvoidingView>
   );
 }

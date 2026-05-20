@@ -39,6 +39,7 @@ interface Props {
 const EFFORT_OPTIONS: Effort[] = ['easy', 'medium', 'hard'];
 
 let draftKeyCounter = 0;
+
 function nextKey(): string {
   return String(++draftKeyCounter);
 }
@@ -65,6 +66,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+
   const { theme } = useTheme();
   const themeStyles = getThemeStyles(theme);
   const inputStyle = [styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }];
@@ -104,7 +106,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   }, [recipeId]);
 
   // ── Ingredient helpers ─────────────────────────────────────────
-
   function addIngredient(): void {
     setIngredients(prev => [...prev, { key: nextKey(), name: '', quantity: '', unit: null }]);
   }
@@ -122,7 +123,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   }
 
   // ── Step helpers ───────────────────────────────────────────────
-
   function addStep(): void {
     setSteps(prev => [...prev, { key: nextKey(), instruction: '' }]);
   }
@@ -136,19 +136,19 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   }
 
   // ── Tag helpers ────────────────────────────────────────────────
-
   function toggleTag(tagId: number): void {
     setSelectedTagIds(prev =>
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
     );
   }
+
   function toggleCategory(categoryId: number): void {
     setSelectedCategoryIds(prev =>
       prev.includes(categoryId) ? prev.filter(id => id !== categoryId) : [...prev, categoryId]
     );
   }
-  // ── Save ───────────────────────────────────────────────────────
 
+  // ── Save ───────────────────────────────────────────────────────
   async function handleSave(): Promise<void> {
     if (!title.trim()) {
       setError('Title is required');
@@ -185,7 +185,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   }
 
   // ── Render ─────────────────────────────────────────────────────
-
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -197,10 +196,9 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, themeStyles.container]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      <View style={[styles.container, themeStyles.container]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <Pressable onPress={onBack} style={styles.headerButton}>
@@ -215,13 +213,12 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
-
         {error && <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>}
 
         {/* ── Title ── */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Title *</Text>
         <TextInput
-          style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
+          style={inputStyle}
           value={title}
           onChangeText={setTitle}
           placeholder="Recipe name"
@@ -231,7 +228,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         {/* ── Description ── */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Description</Text>
         <TextInput
-          style={[styles.input, styles.inputMultiline, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
+          style={inputMultilineStyle}
           value={description}
           onChangeText={setDescription}
           placeholder="A short description…"
@@ -255,7 +252,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
                 ]}
                 onPress={() => setEffort(active ? null : opt)}
               >
-                <Text style={[styles.segmentText, { color: theme.textSecondary }, active && { color: EFFORT_COLOURS[opt], fontWeight: '600' }]}> 
+                <Text style={[styles.segmentText, { color: theme.textSecondary }, active && { color: EFFORT_COLOURS[opt], fontWeight: '600' }]}>
                   {EFFORT_LABELS[opt]}
                 </Text>
               </Pressable>
@@ -268,7 +265,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           <View style={styles.rowField}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Prep (min)</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
+              style={inputStyle}
               value={prepTime}
               onChangeText={setPrepTime}
               placeholder="0"
@@ -279,7 +276,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           <View style={styles.rowField}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Cook (min)</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
+              style={inputStyle}
               value={cookTime}
               onChangeText={setCookTime}
               placeholder="0"
@@ -290,7 +287,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           <View style={styles.rowField}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Servings</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
+              style={inputStyle}
               value={servings}
               onChangeText={setServings}
               placeholder="0"
@@ -407,15 +404,12 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         <Pressable style={[styles.addButton, { borderColor: theme.inputBorder }]} onPress={addStep}>
           <Text style={[styles.addButtonText, { color: theme.textSecondary }]}>+ Add step</Text>
         </Pressable>
-
       </ScrollView>
-      </View>
     </KeyboardAvoidingView>
   );
 }
 
 // ── Styles ────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -426,7 +420,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -456,7 +449,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'right',
   },
-  // Scroll
   scroll: {
     flex: 1,
   },
@@ -464,13 +456,11 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 48,
   },
-  // Error
   errorText: {
     color: '#e74c3c',
     fontSize: 14,
     marginBottom: 12,
   },
-  // Labels & sections
   label: {
     fontSize: 13,
     fontWeight: '600',
@@ -487,7 +477,6 @@ const styles = StyleSheet.create({
     marginTop: 28,
     marginBottom: 10,
   },
-  // Inputs
   input: {
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -502,7 +491,6 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  // Effort segment
   segmentRow: {
     flexDirection: 'row',
     gap: 8,
@@ -520,7 +508,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
-  // Row fields (prep / cook / servings)
   rowFields: {
     flexDirection: 'row',
     gap: 10,
@@ -528,7 +515,6 @@ const styles = StyleSheet.create({
   rowField: {
     flex: 1,
   },
-  // Tags
   tagsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -553,7 +539,6 @@ const styles = StyleSheet.create({
   tagChipTextActive: {
     color: '#fff',
   },
-  // Ingredient rows
   ingredientRow: {
     marginBottom: 10,
     gap: 6,
@@ -583,7 +568,6 @@ const styles = StyleSheet.create({
   picker: {
     color: '#111',
   },
-  // Step rows
   listRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -608,7 +592,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#bbb',
   },
-  // Step number badge
   stepNumber: {
     width: 28,
     height: 28,
@@ -624,7 +607,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  // Add buttons
   addButton: {
     paddingVertical: 12,
     alignItems: 'center',
