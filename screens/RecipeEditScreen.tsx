@@ -10,11 +10,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { UnitPicker } from '../components/UnitPicker';
 import { getRecipeById, updateRecipe } from '../repositories/recipeRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import { getAllTags } from '../repositories/tagRepository';
-import { EFFORT_COLOURS, EFFORT_LABELS } from '../lib/theme';
+import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Category, Effort, IngredientUnit, Tag } from '../models';
 import { INGREDIENT_UNITS } from '../models';
 
@@ -65,6 +65,10 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const { theme } = useTheme();
+  const themeStyles = getThemeStyles(theme);
+  const inputStyle = [styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }];
+  const inputMultilineStyle = [styles.input, styles.inputMultiline, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }];
 
   useEffect(() => {
     Promise.all([getRecipeById(recipeId), getAllTags(), getAllCategories()])
@@ -192,19 +196,19 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, themeStyles.container]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, themeStyles.container]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <Pressable onPress={onBack} style={styles.headerButton}>
-          <Text style={styles.headerButtonText}>Cancel</Text>
+          <Text style={[styles.headerButtonText, { color: theme.textSecondary }]}>Cancel</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Edit Recipe</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>Edit Recipe</Text>
         <Pressable onPress={handleSave} style={styles.headerButton} disabled={saving}>
-          <Text style={[styles.headerButtonText, styles.headerButtonSave]}>
+          <Text style={[styles.headerButtonText, styles.headerButtonSave, { color: theme.text }]}>
             {saving ? 'Saving…' : 'Save'}
           </Text>
         </Pressable>
@@ -212,32 +216,32 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
 
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
 
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        {error && <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>}
 
         {/* ── Title ── */}
-        <Text style={styles.label}>Title *</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Title *</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
           value={title}
           onChangeText={setTitle}
           placeholder="Recipe name"
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.placeholderText}
         />
 
         {/* ── Description ── */}
-        <Text style={styles.label}>Description</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Description</Text>
         <TextInput
-          style={[styles.input, styles.inputMultiline]}
+          style={[styles.input, styles.inputMultiline, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
           value={description}
           onChangeText={setDescription}
           placeholder="A short description…"
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.placeholderText}
           multiline
           numberOfLines={3}
         />
 
         {/* ── Effort ── */}
-        <Text style={styles.label}>Effort</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Effort</Text>
         <View style={styles.segmentRow}>
           {EFFORT_OPTIONS.map(opt => {
             const active = effort === opt;
@@ -246,11 +250,12 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
                 key={opt}
                 style={[
                   styles.segmentButton,
+                  { backgroundColor: theme.surface, borderColor: theme.inputBorder },
                   active && { backgroundColor: EFFORT_COLOURS[opt] + '22', borderColor: EFFORT_COLOURS[opt] },
                 ]}
                 onPress={() => setEffort(active ? null : opt)}
               >
-                <Text style={[styles.segmentText, active && { color: EFFORT_COLOURS[opt], fontWeight: '600' }]}>
+                <Text style={[styles.segmentText, { color: theme.textSecondary }, active && { color: EFFORT_COLOURS[opt], fontWeight: '600' }]}> 
                   {EFFORT_LABELS[opt]}
                 </Text>
               </Pressable>
@@ -261,35 +266,35 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         {/* ── Times & servings ── */}
         <View style={styles.rowFields}>
           <View style={styles.rowField}>
-            <Text style={styles.label}>Prep (min)</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Prep (min)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
               value={prepTime}
               onChangeText={setPrepTime}
               placeholder="0"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.placeholderText}
               keyboardType="numeric"
             />
           </View>
           <View style={styles.rowField}>
-            <Text style={styles.label}>Cook (min)</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Cook (min)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
               value={cookTime}
               onChangeText={setCookTime}
               placeholder="0"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.placeholderText}
               keyboardType="numeric"
             />
           </View>
           <View style={styles.rowField}>
-            <Text style={styles.label}>Servings</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Servings</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
               value={servings}
               onChangeText={setServings}
               placeholder="0"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.placeholderText}
               keyboardType="numeric"
             />
           </View>
@@ -297,17 +302,17 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
 
         {allCategories.length > 0 && (
           <>
-            <Text style={styles.label}>Categories</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Categories</Text>
             <View style={styles.tagsWrap}>
               {allCategories.map(category => {
                 const active = selectedCategoryIds.includes(category.id);
                 return (
                   <Pressable
                     key={category.id}
-                    style={[styles.tagChip, active && styles.tagChipActive]}
+                    style={[styles.tagChip, { backgroundColor: theme.surface, borderColor: theme.border }, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                     onPress={() => toggleCategory(category.id)}
                   >
-                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                    <Text style={[styles.tagChipText, { color: theme.textSecondary }, active && { color: theme.surface }]}>
                       {category.name}
                     </Text>
                   </Pressable>
@@ -320,17 +325,17 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         {/* ── Tags ── */}
         {allTags.length > 0 && (
           <>
-            <Text style={styles.label}>Tags</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>Tags</Text>
             <View style={styles.tagsWrap}>
               {allTags.map(tag => {
                 const active = selectedTagIds.includes(tag.id);
                 return (
                   <Pressable
                     key={tag.id}
-                    style={[styles.tagChip, active && styles.tagChipActive]}
+                    style={[styles.tagChip, { backgroundColor: theme.surface, borderColor: theme.border }, active && { backgroundColor: theme.accent, borderColor: theme.accent }]}
                     onPress={() => toggleTag(tag.id)}
                   >
-                    <Text style={[styles.tagChipText, active && styles.tagChipTextActive]}>
+                    <Text style={[styles.tagChipText, { color: theme.textSecondary }, active && { color: theme.surface }]}>
                       {tag.name}
                     </Text>
                   </Pressable>
@@ -341,17 +346,17 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         )}
 
         {/* ── Ingredients ── */}
-        <Text style={styles.sectionTitle}>Ingredients</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Ingredients</Text>
         {ingredients.map((ing, i) => (
           <View key={ing.key} style={styles.ingredientRow}>
             <View style={styles.ingredientTopRow}>
               <Text style={styles.listIndex}>{i + 1}</Text>
               <TextInput
-                style={[styles.input, styles.flex1]}
+                style={[styles.input, styles.flex1, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
                 value={ing.name}
                 onChangeText={v => updateIngredient(ing.key, 'name', v)}
                 placeholder="Ingredient name"
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.placeholderText}
               />
               <Pressable onPress={() => removeIngredient(ing.key)} style={styles.removeButton}>
                 <Text style={styles.removeButtonText}>✕</Text>
@@ -359,46 +364,39 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
             </View>
             <View style={styles.ingredientBottomRow}>
               <TextInput
-                style={[styles.input, styles.quantityInput]}
+                style={[styles.input, styles.quantityInput, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
                 value={ing.quantity}
                 onChangeText={v => updateIngredient(ing.key, 'quantity', v)}
                 placeholder="Qty"
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.placeholderText}
               />
-              <View style={styles.pickerWrapper}>
-                <Picker
-                  selectedValue={ing.unit}
-                  onValueChange={v => updateIngredient(ing.key, 'unit', v as IngredientUnit | null)}
-                  style={styles.picker}
-                  dropdownIconColor="#555"
-                  mode="dropdown"
-                >
-                  <Picker.Item label="— unit —" value={null} />
-                  {INGREDIENT_UNITS.map(u => (
-                    <Picker.Item key={u.value} label={u.label} value={u.value} />
-                  ))}
-                </Picker>
-              </View>
+              <UnitPicker
+                value={ing.unit}
+                onValueChange={v => updateIngredient(ing.key, 'unit', v as IngredientUnit | null)}
+                theme={theme}
+                style={[styles.pickerWrapper, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}
+                options={[{ label: '— unit —', value: null }, ...INGREDIENT_UNITS.map(u => ({ label: u.label, value: u.value }))]}
+              />
             </View>
           </View>
         ))}
-        <Pressable style={styles.addButton} onPress={addIngredient}>
-          <Text style={styles.addButtonText}>+ Add ingredient</Text>
+        <Pressable style={[styles.addButton, { borderColor: theme.inputBorder }]} onPress={addIngredient}>
+          <Text style={[styles.addButtonText, { color: theme.textSecondary }]}>+ Add ingredient</Text>
         </Pressable>
 
         {/* ── Steps ── */}
-        <Text style={styles.sectionTitle}>Steps</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>Steps</Text>
         {steps.map((step, i) => (
           <View key={step.key} style={styles.listRow}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>{i + 1}</Text>
             </View>
             <TextInput
-              style={[styles.input, styles.flex1, styles.inputMultiline]}
+              style={[styles.input, styles.flex1, styles.inputMultiline, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
               value={step.instruction}
               onChangeText={v => updateStep(step.key, v)}
               placeholder="Describe this step…"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.placeholderText}
               multiline
             />
             <Pressable onPress={() => removeStep(step.key)} style={styles.removeButton}>
@@ -406,8 +404,8 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
             </Pressable>
           </View>
         ))}
-        <Pressable style={styles.addButton} onPress={addStep}>
-          <Text style={styles.addButtonText}>+ Add step</Text>
+        <Pressable style={[styles.addButton, { borderColor: theme.inputBorder }]} onPress={addStep}>
+          <Text style={[styles.addButtonText, { color: theme.textSecondary }]}>+ Add step</Text>
         </Pressable>
 
       </ScrollView>
@@ -633,7 +631,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderStyle: 'dashed',
     marginTop: 4,
   },
   addButtonText: {
