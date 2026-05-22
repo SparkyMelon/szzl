@@ -3,10 +3,8 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "expo start --clear",
+    "build-apk": "eas build --platform android"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
