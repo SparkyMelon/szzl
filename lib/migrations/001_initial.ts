@@ -17,16 +17,18 @@ export const seedTagsSql = defaultTags
 
 export default `
     CREATE TABLE IF NOT EXISTS recipes (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        title       TEXT    NOT NULL,
-        description TEXT,
-        effort      TEXT    CHECK(effort IN ('easy', 'medium', 'hard')),
-        prep_time   INTEGER,
-        cook_time   INTEGER,
-        servings    INTEGER,
-        image_uri   TEXT,
-        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        title        TEXT    NOT NULL,
+        description  TEXT,
+        effort       TEXT    CHECK(effort IN ('easy', 'medium', 'hard')),
+        prep_time    INTEGER,
+        cook_time    INTEGER,
+        servings     INTEGER,
+        image_uri    TEXT,
+        is_favourite INTEGER NOT NULL DEFAULT 0,
+        rating       INTEGER CHECK(rating IS NULL OR (rating >= 1 AND rating <= 5)),
+        created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS recipe_ingredients (

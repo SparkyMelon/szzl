@@ -51,6 +51,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   const [prepTime, setPrepTime] = useState('');
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState('');
+  const [rating, setRating] = useState<number | null>(null);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [steps, setSteps] = useState<StepDraft[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -110,6 +111,10 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
     );
   }
 
+  function handleStarPress(star: number): void {
+    setRating(prev => (prev === star ? null : star));
+  }
+
   async function handleSave(): Promise<void> {
     if (!title.trim()) {
       setError('Title is required');
@@ -125,6 +130,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         prepTime: prepTime ? parseInt(prepTime, 10) : null,
         cookTime: cookTime ? parseInt(cookTime, 10) : null,
         servings: servings ? parseInt(servings, 10) : null,
+        rating,
         ingredients: ingredients
           .filter(ing => ing.name.trim())
           .map(ing => ({
@@ -208,6 +214,22 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
               </Pressable>
             );
           })}
+        </View>
+
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Rating</Text>
+        <View style={styles.ratingRow}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <Pressable key={star} onPress={() => handleStarPress(star)} hitSlop={6}>
+              <Text style={[styles.ratingStar, { color: rating != null && star <= rating ? '#f5a623' : theme.surfaceAlt === '#242424' ? '#444' : '#ddd' }]}>
+                ★
+              </Text>
+            </Pressable>
+          ))}
+          {rating != null && (
+            <Pressable onPress={() => setRating(null)} style={styles.ratingClear}>
+              <Text style={[styles.ratingClearText, { color: theme.textSecondary }]}>Clear</Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.rowFields}>
@@ -392,6 +414,23 @@ const styles = StyleSheet.create({
     borderRadius: 10, borderWidth: 1, borderColor: '#e8e8e8', backgroundColor: '#fff',
   },
   segmentText: { fontSize: 14, color: '#555' },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  ratingStar: {
+    fontSize: 32,
+  },
+  ratingClear: {
+    marginLeft: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  ratingClearText: {
+    fontSize: 13,
+    color: '#888',
+  },
   rowFields: { flexDirection: 'row', gap: 10 },
   rowField: { flex: 1 },
   tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -399,9 +438,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
     backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0',
   },
-  tagChipActive: { backgroundColor: '#111', borderColor: '#111' },
   tagChipText: { fontSize: 13, color: '#555' },
-  tagChipTextActive: { color: '#fff' },
   ingredientRow: { marginBottom: 10, gap: 6 },
   ingredientTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   ingredientBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 26 },
@@ -410,7 +447,6 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: '#fff', borderRadius: 10,
     borderWidth: 1, borderColor: '#e8e8e8', justifyContent: 'center',
   },
-  picker: { color: '#111' },
   listRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
   flex1: { flex: 1 },
   removeButton: { padding: 10, marginTop: 2 },

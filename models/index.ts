@@ -34,6 +34,8 @@ export interface Recipe {
   cookTime: number | null;
   servings: number | null;
   imageUri: string | null;
+  isFavourite: number;
+  rating: number | null;
   ingredients?: RecipeIngredient[];
   steps?: RecipeStep[];
   tags?: Tag[];

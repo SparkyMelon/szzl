@@ -49,19 +49,17 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Core fields
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [effort, setEffort] = useState<Effort | null>(null);
   const [prepTime, setPrepTime] = useState('');
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState('');
+  const [rating, setRating] = useState<number | null>(null);
 
-  // Ingredients & steps
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [steps, setSteps] = useState<StepDraft[]>([]);
 
-  // Tags
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
@@ -85,6 +83,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         setPrepTime(recipe.prepTime != null ? String(recipe.prepTime) : '');
         setCookTime(recipe.cookTime != null ? String(recipe.cookTime) : '');
         setServings(recipe.servings != null ? String(recipe.servings) : '');
+        setRating(recipe.rating);
         setIngredients(
           (recipe.ingredients ?? []).map(ing => ({
             key: nextKey(),
@@ -105,7 +104,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
       .finally(() => setLoading(false));
   }, [recipeId]);
 
-  // ── Ingredient helpers ─────────────────────────────────────────
   function addIngredient(): void {
     setIngredients(prev => [...prev, { key: nextKey(), name: '', quantity: '', unit: null }]);
   }
@@ -122,7 +120,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
     setIngredients(prev => prev.filter(ing => ing.key !== key));
   }
 
-  // ── Step helpers ───────────────────────────────────────────────
   function addStep(): void {
     setSteps(prev => [...prev, { key: nextKey(), instruction: '' }]);
   }
@@ -135,7 +132,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
     setSteps(prev => prev.filter(s => s.key !== key));
   }
 
-  // ── Tag helpers ────────────────────────────────────────────────
   function toggleTag(tagId: number): void {
     setSelectedTagIds(prev =>
       prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
@@ -148,7 +144,11 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
     );
   }
 
-  // ── Save ───────────────────────────────────────────────────────
+  function handleStarPress(star: number): void {
+    // Tapping the current rating clears it
+    setRating(prev => (prev === star ? null : star));
+  }
+
   async function handleSave(): Promise<void> {
     if (!title.trim()) {
       setError('Title is required');
@@ -164,6 +164,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         prepTime: prepTime ? parseInt(prepTime, 10) : null,
         cookTime: cookTime ? parseInt(cookTime, 10) : null,
         servings: servings ? parseInt(servings, 10) : null,
+        rating,
         ingredients: ingredients
           .filter(ing => ing.name.trim())
           .map(ing => ({
@@ -184,7 +185,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
     }
   }
 
-  // ── Render ─────────────────────────────────────────────────────
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -215,7 +215,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
         {error && <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>}
 
-        {/* ── Title ── */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Title *</Text>
         <TextInput
           style={inputStyle}
@@ -225,7 +224,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           placeholderTextColor={theme.placeholderText}
         />
 
-        {/* ── Description ── */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Description</Text>
         <TextInput
           style={inputMultilineStyle}
@@ -237,7 +235,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           numberOfLines={3}
         />
 
-        {/* ── Effort ── */}
         <Text style={[styles.label, { color: theme.textSecondary }]}>Effort</Text>
         <View style={styles.segmentRow}>
           {EFFORT_OPTIONS.map(opt => {
@@ -260,7 +257,22 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           })}
         </View>
 
-        {/* ── Times & servings ── */}
+        <Text style={[styles.label, { color: theme.textSecondary }]}>Rating</Text>
+        <View style={styles.ratingRow}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <Pressable key={star} onPress={() => handleStarPress(star)} hitSlop={6}>
+              <Text style={[styles.ratingStar, { color: rating != null && star <= rating ? '#f5a623' : theme.surfaceAlt === '#242424' ? '#444' : '#ddd' }]}>
+                ★
+              </Text>
+            </Pressable>
+          ))}
+          {rating != null && (
+            <Pressable onPress={() => setRating(null)} style={styles.ratingClear}>
+              <Text style={[styles.ratingClearText, { color: theme.textSecondary }]}>Clear</Text>
+            </Pressable>
+          )}
+        </View>
+
         <View style={styles.rowFields}>
           <View style={styles.rowField}>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Prep (min)</Text>
@@ -319,7 +331,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           </>
         )}
 
-        {/* ── Tags ── */}
         {allTags.length > 0 && (
           <>
             <Text style={[styles.label, { color: theme.textSecondary }]}>Tags</Text>
@@ -342,7 +353,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           </>
         )}
 
-        {/* ── Ingredients ── */}
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Ingredients</Text>
         {ingredients.map((ing, i) => (
           <View key={ing.key} style={styles.ingredientRow}>
@@ -381,7 +391,6 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
           <Text style={[styles.addButtonText, { color: theme.textSecondary }]}>+ Add ingredient</Text>
         </Pressable>
 
-        {/* ── Steps ── */}
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Steps</Text>
         {steps.map((step, i) => (
           <View key={step.key} style={styles.listRow}>
@@ -409,17 +418,9 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#f8f8f8' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -430,193 +431,78 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111',
-  },
-  headerButton: {
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    minWidth: 60,
-  },
-  headerButtonText: {
-    fontSize: 15,
-    color: '#555',
-  },
-  headerButtonSave: {
-    color: '#111',
-    fontWeight: '600',
-    textAlign: 'right',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 48,
-  },
-  errorText: {
-    color: '#e74c3c',
-    fontSize: 14,
-    marginBottom: 12,
-  },
+  headerTitle: { fontSize: 16, fontWeight: '600', color: '#111' },
+  headerButton: { paddingHorizontal: 4, paddingVertical: 4, minWidth: 60 },
+  headerButtonText: { fontSize: 15, color: '#555' },
+  headerButtonSave: { color: '#111', fontWeight: '600', textAlign: 'right' },
+  scroll: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 48 },
+  errorText: { color: '#e74c3c', fontSize: 14, marginBottom: 12 },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#888',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 6,
-    marginTop: 16,
+    fontSize: 13, fontWeight: '600', color: '#888',
+    textTransform: 'uppercase', letterSpacing: 0.4,
+    marginBottom: 6, marginTop: 16,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111',
-    marginTop: 28,
-    marginBottom: 10,
-  },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginTop: 28, marginBottom: 10 },
   input: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#111',
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
+    backgroundColor: '#fff', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 10,
+    fontSize: 15, color: '#111',
+    borderWidth: 1, borderColor: '#e8e8e8',
   },
-  inputMultiline: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  inputMultiline: { minHeight: 80, textAlignVertical: 'top' },
+  segmentRow: { flexDirection: 'row', gap: 8 },
   segmentButton: {
-    flex: 1,
-    paddingVertical: 10,
+    flex: 1, paddingVertical: 10, alignItems: 'center',
+    borderRadius: 10, borderWidth: 1, borderColor: '#e8e8e8', backgroundColor: '#fff',
+  },
+  segmentText: { fontSize: 14, color: '#555' },
+  ratingRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
-    backgroundColor: '#fff',
+    gap: 6,
   },
-  segmentText: {
-    fontSize: 14,
-    color: '#555',
+  ratingStar: {
+    fontSize: 32,
   },
-  rowFields: {
-    flexDirection: 'row',
-    gap: 10,
+  ratingClear: {
+    marginLeft: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  rowField: {
-    flex: 1,
+  ratingClearText: {
+    fontSize: 13,
+    color: '#888',
   },
-  tagsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
+  rowFields: { flexDirection: 'row', gap: 10 },
+  rowField: { flex: 1 },
+  tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tagChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    backgroundColor: '#fff', borderWidth: 1, borderColor: '#e0e0e0',
   },
-  tagChipActive: {
-    backgroundColor: '#111',
-    borderColor: '#111',
-  },
-  tagChipText: {
-    fontSize: 13,
-    color: '#555',
-  },
-  tagChipTextActive: {
-    color: '#fff',
-  },
-  ingredientRow: {
-    marginBottom: 10,
-    gap: 6,
-  },
-  ingredientTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  ingredientBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingLeft: 26,
-  },
-  quantityInput: {
-    width: 80,
-  },
+  tagChipText: { fontSize: 13, color: '#555' },
+  ingredientRow: { marginBottom: 10, gap: 6 },
+  ingredientTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ingredientBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 26 },
+  quantityInput: { width: 80 },
   pickerWrapper: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
-    justifyContent: 'center',
+    flex: 1, backgroundColor: '#fff', borderRadius: 10,
+    borderWidth: 1, borderColor: '#e8e8e8', justifyContent: 'center',
   },
-  picker: {
-    color: '#111',
-  },
-  listRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-    marginBottom: 8,
-  },
-  listIndex: {
-    width: 20,
-    marginTop: 12,
-    fontSize: 13,
-    color: '#999',
-    textAlign: 'center',
-  },
-  flex1: {
-    flex: 1,
-  },
-  removeButton: {
-    padding: 10,
-    marginTop: 2,
-  },
-  removeButtonText: {
-    fontSize: 14,
-    color: '#bbb',
-  },
+  listRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
+  listIndex: { width: 20, marginTop: 12, fontSize: 13, color: '#999', textAlign: 'center' },
+  flex1: { flex: 1 },
+  removeButton: { padding: 10, marginTop: 2 },
+  removeButtonText: { fontSize: 14, color: '#bbb' },
   stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#111',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    flexShrink: 0,
+    width: 28, height: 28, borderRadius: 14, backgroundColor: '#111',
+    alignItems: 'center', justifyContent: 'center', marginTop: 8, flexShrink: 0,
   },
-  stepNumberText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
+  stepNumberText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   addButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    marginTop: 4,
+    paddingVertical: 12, alignItems: 'center', borderRadius: 10,
+    borderWidth: 1, borderColor: '#e0e0e0', marginTop: 4,
   },
-  addButtonText: {
-    fontSize: 14,
-    color: '#555',
-  },
+  addButtonText: { fontSize: 14, color: '#555' },
 });

@@ -66,6 +66,8 @@ type SeedRecipe = {
   prepTime: number;
   cookTime: number;
   servings: number;
+  rating?: number | null;
+  isFavourite?: number;
   ingredients: SeedIngredient[];
   steps: SeedStep[];
   tagNames?: string[];
@@ -74,9 +76,18 @@ type SeedRecipe = {
 
 async function seedRecipe(db: any, recipe: SeedRecipe): Promise<number> {
   const result = await db.runAsync(
-    `INSERT INTO recipes (title, description, effort, prep_time, cook_time, servings)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [recipe.title, recipe.description, recipe.effort, recipe.prepTime, recipe.cookTime, recipe.servings]
+    `INSERT INTO recipes (title, description, effort, prep_time, cook_time, servings, rating, is_favourite)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      recipe.title,
+      recipe.description,
+      recipe.effort,
+      recipe.prepTime,
+      recipe.cookTime,
+      recipe.servings,
+      recipe.rating ?? null,
+      recipe.isFavourite ?? 0,
+    ]
   );
 
   const recipeId = result.lastInsertRowId;
@@ -118,6 +129,8 @@ async function seed(): Promise<void> {
     prepTime: 5,
     cookTime: 10,
     servings: 2,
+    rating: 4,
+    isFavourite: 1,
     ingredients: [
       { name: 'Eggs', quantity: '4', unit: 'unit', sortOrder: 0 },
       { name: 'Butter', quantity: '1', unit: 'tbsp', sortOrder: 1 },
@@ -139,6 +152,7 @@ async function seed(): Promise<void> {
     prepTime: 15,
     cookTime: 15,
     servings: 4,
+    rating: 5,
     ingredients: [
       { name: 'Chicken breast', quantity: '2', unit: 'unit', sortOrder: 0 },
       { name: 'Soy sauce', quantity: '3', unit: 'tbsp', sortOrder: 1 },
@@ -162,6 +176,7 @@ async function seed(): Promise<void> {
     prepTime: 10,
     cookTime: 20,
     servings: 4,
+    rating: 3,
     ingredients: [
       { name: 'Pasta', quantity: '300', unit: 'g', sortOrder: 0 },
       { name: 'Tomatoes', quantity: '4', unit: 'unit', sortOrder: 1 },
@@ -210,6 +225,8 @@ async function seed(): Promise<void> {
     prepTime: 20,
     cookTime: 30,
     servings: 4,
+    rating: 4,
+    isFavourite: 1,
     ingredients: [
       { name: 'Mixed vegetables', quantity: '400', unit: 'g', sortOrder: 0 },
       { name: 'Coconut milk', quantity: '1', unit: 'cup', sortOrder: 1 },
@@ -235,6 +252,7 @@ async function seed(): Promise<void> {
     prepTime: 5,
     cookTime: 2,
     servings: 1,
+    rating: 5,
     ingredients: [
       { name: 'Flour', quantity: '4', unit: 'tbsp', sortOrder: 0 },
       { name: 'Cocoa powder', quantity: '2', unit: 'tbsp', sortOrder: 1 },

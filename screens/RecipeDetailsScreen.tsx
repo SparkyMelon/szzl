@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { deleteRecipe, getRecipeById } from '../repositories/recipeRepository';
+import { deleteRecipe, getRecipeById, toggleFavourite } from '../repositories/recipeRepository';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Recipe } from '../models';
 
@@ -25,6 +25,20 @@ interface Props {
   onBack: () => void;
   onEdit: (id: number) => void;
   onDelete: (title: string) => void;
+}
+
+// ── Star Rating Display ───────────────────────────────────────────
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <Text key={i} style={[styles.starIcon, { color: i <= rating ? '#f5a623' : '#ddd' }]}>
+          ★
+        </Text>
+      ))}
+    </View>
+  );
 }
 
 // ── Ingredients Tab ───────────────────────────────────────────────
@@ -103,12 +117,20 @@ function InfoTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<
         )}
       </View>
 
+      {/* Rating */}
+      {recipe.rating != null && (
+        <View style={styles.infoSection}>
+          <Text style={[styles.infoSectionTitle, themeStyles.infoSectionTitle]}>Rating</Text>
+          <StarRating rating={recipe.rating} />
+        </View>
+      )}
+
       {/* Effort */}
       {recipe.effort && (
         <View style={styles.infoSection}>
           <Text style={[styles.infoSectionTitle, themeStyles.infoSectionTitle]}>Effort</Text>
-          <View style={[styles.effortBadge, { backgroundColor: EFFORT_COLOURS[recipe.effort] + '22' }]}> 
-            <Text style={[styles.effortText, { color: EFFORT_COLOURS[recipe.effort] }]}> 
+          <View style={[styles.effortBadge, { backgroundColor: EFFORT_COLOURS[recipe.effort] + '22' }]}>
+            <Text style={[styles.effortText, { color: EFFORT_COLOURS[recipe.effort] }]}>
               {EFFORT_LABELS[recipe.effort]}
             </Text>
           </View>
@@ -150,6 +172,12 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
       .finally(() => setLoading(false));
   }, [recipeId]);
 
+  async function handleToggleFavourite(): Promise<void> {
+    if (!recipe) return;
+    await toggleFavourite(recipeId);
+    setRecipe(prev => prev ? { ...prev, isFavourite: prev.isFavourite === 1 ? 0 : 1 } : prev);
+  }
+
   async function handleDelete(): Promise<void> {
     if (!recipe) return;
     setDeleting(true);
@@ -189,6 +217,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
     if (recipe.prepTime != null) infoLines.push(`Prep: ${recipe.prepTime}m`);
     if (recipe.cookTime != null) infoLines.push(`Cook: ${recipe.cookTime}m`);
     if (recipe.servings != null) infoLines.push(`Servings: ${recipe.servings}`);
+    if (recipe.rating != null) infoLines.push(`Rating: ${'★'.repeat(recipe.rating)}${'☆'.repeat(5 - recipe.rating)}`);
     if (recipe.tags && recipe.tags.length) infoLines.push(`Tags: ${recipe.tags.map((tag) => tag.name).join(', ')}`);
     if (recipe.categories && recipe.categories.length) infoLines.push(`Categories: ${recipe.categories.map((category) => category.name).join(', ')}`);
 
@@ -218,6 +247,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
   });
 
   const themeStyles = getThemeStyles(theme);
+  const isFav = recipe?.isFavourite === 1;
 
   if (loading) {
     return (
@@ -301,6 +331,16 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
             <Ionicons name="share-outline" size={20} color="#fff" />
           </Pressable>
           <Pressable
+            onPress={handleToggleFavourite}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
+          >
+            <Ionicons
+              name={isFav ? 'star' : 'star-outline'}
+              size={20}
+              color={isFav ? '#f5a623' : '#fff'}
+            />
+          </Pressable>
+          <Pressable
             onPress={() => onEdit(recipe.id)}
             style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
           >
@@ -321,7 +361,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
       >
         <View style={{ height: HERO_HEIGHT - 32 }} />
 
-<View style={[styles.card, themeStyles.card]}>
+        <View style={[styles.card, themeStyles.card]}>
 
           <Text style={[styles.title, themeStyles.title]}>{recipe.title}</Text>
           {recipe.description && (
@@ -640,6 +680,13 @@ const styles = StyleSheet.create({
   effortText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  starRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  starIcon: {
+    fontSize: 22,
   },
   tagsWrap: {
     flexDirection: 'row',

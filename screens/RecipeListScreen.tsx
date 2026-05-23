@@ -13,6 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
@@ -21,9 +22,25 @@ import type { Category, Recipe, Tag } from '../models';
 import SpeedDial from '../components/SpeedDial';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 
+// ── Star Rating Display ───────────────────────────────────────────
+
+function StarRating({ rating, size = 10 }: { rating: number; size?: number }) {
+  return (
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <Text key={i} style={[styles.starIcon, { fontSize: size, color: i <= rating ? '#f5a623' : '#ddd' }]}>
+          ★
+        </Text>
+      ))}
+    </View>
+  );
+}
+
 // ── Recipe Card ───────────────────────────────────────────────────
 
 function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress: () => void; themeStyles: Record<string, any> }) {
+  const isFav = recipe.isFavourite === 1;
+
   return (
     <Pressable
       style={({ pressed }) => [styles.card, themeStyles.card, pressed && styles.cardPressed]}
@@ -37,6 +54,14 @@ function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress:
             <Text style={styles.imagePlaceholderText}>🍽</Text>
           </View>
         )}
+        {isFav && (
+          <Ionicons
+            name="star"
+            size={16}
+            color="#f5a623"
+            style={styles.favIcon}
+          />
+        )}
       </View>
       <View style={styles.cardContent}>
         <Text style={[styles.cardTitle, themeStyles.cardTitle]} numberOfLines={2}>{recipe.title}</Text>
@@ -46,6 +71,9 @@ function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress:
               {EFFORT_LABELS[recipe.effort]}
             </Text>
           </View>
+        )}
+        {recipe.rating != null && (
+          <StarRating rating={recipe.rating} size={10} />
         )}
         {recipe.categories && recipe.categories.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagRow}>
@@ -454,9 +482,17 @@ const styles = StyleSheet.create({
   imagePlaceholderText: {
     fontSize: 32,
   },
+  favIcon: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   cardContent: {
     padding: 10,
-    gap: 6,
+    gap: 5,
   },
   cardTitle: {
     fontSize: 14,
@@ -472,6 +508,13 @@ const styles = StyleSheet.create({
   effortText: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  starRow: {
+    flexDirection: 'row',
+    gap: 1,
+  },
+  starIcon: {
+    lineHeight: 14,
   },
   tagRow: {
     marginTop: 2,
