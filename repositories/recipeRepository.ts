@@ -1,5 +1,6 @@
 import { getDB } from '../lib/database';
 import type { Category, Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
+import type { SortOption } from '../models';
 
 const RECIPE_COLUMNS = `
   id, title, description, effort, servings,
@@ -12,10 +13,21 @@ const RECIPE_COLUMNS = `
   updated_at  AS updatedAt
 `;
 
-export async function getAllRecipes(): Promise<Recipe[]> {
+function sortClause(sort: SortOption): string {
+  switch (sort) {
+    case 'date_desc':   return 'ORDER BY r.created_at DESC';
+    case 'date_asc':    return 'ORDER BY r.created_at ASC';
+    case 'title_asc':   return 'ORDER BY r.title ASC';
+    case 'title_desc':  return 'ORDER BY r.title DESC';
+    case 'rating_desc': return 'ORDER BY CASE WHEN r.rating IS NULL THEN 1 ELSE 0 END, r.rating DESC';
+    case 'rating_asc':  return 'ORDER BY CASE WHEN r.rating IS NULL THEN 1 ELSE 0 END, r.rating ASC';
+  }
+}
+
+export async function getAllRecipes(sort: SortOption = 'date_desc'): Promise<Recipe[]> {
   const db = await getDB();
   const recipes = await db.getAllAsync<Recipe>(
-    `SELECT ${RECIPE_COLUMNS} FROM recipes ORDER BY created_at DESC`
+    `SELECT ${RECIPE_COLUMNS} FROM recipes r ${sortClause(sort)}`
   );
   return Promise.all(recipes.map(async (recipe) => {
     const tags = await db.getAllAsync<Tag>(
@@ -35,7 +47,7 @@ export async function getAllRecipes(): Promise<Recipe[]> {
 export async function getRecipeById(id: number): Promise<Recipe | null> {
   const db = await getDB();
   const recipe = await db.getFirstAsync<Recipe>(
-    `SELECT ${RECIPE_COLUMNS} FROM recipes WHERE id = ?`, [id]
+    `SELECT ${RECIPE_COLUMNS} FROM recipes r WHERE r.id = ?`, [id]
   );
   if (!recipe) return null;
 
@@ -62,7 +74,7 @@ export async function getRecipeById(id: number): Promise<Recipe | null> {
 export async function searchRecipes(
   query: string,
   tagIds: number[],
-  categoryIds: number[],
+  sort: SortOption = 'date_desc',
 ): Promise<Recipe[]> {
   const db = await getDB();
   const conditions: string[] = [];
@@ -71,17 +83,6 @@ export async function searchRecipes(
   if (query.trim()) {
     conditions.push(`r.title LIKE ?`);
     params.push(`%${query.trim()}%`);
-  }
-
-  if (categoryIds.length > 0) {
-    conditions.push(`
-      EXISTS (
-        SELECT 1 FROM recipe_categories rc
-        WHERE rc.recipe_id = r.id
-        AND rc.category_id IN (${categoryIds.map(() => '?').join(',')})
-      )
-    `);
-    params.push(...categoryIds);
   }
 
   if (tagIds.length > 0) {
@@ -98,7 +99,7 @@ export async function searchRecipes(
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const recipes = await db.getAllAsync<Recipe>(
-    `SELECT ${RECIPE_COLUMNS} FROM recipes r ${where} ORDER BY r.created_at DESC`,
+    `SELECT ${RECIPE_COLUMNS} FROM recipes r ${where} ${sortClause(sort)}`,
     params
   );
 

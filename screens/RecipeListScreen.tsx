@@ -18,7 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
-import type { Category, Recipe, Tag } from '../models';
+import type { Category, Recipe, SortOption, Tag } from '../models';
+import { SORT_OPTIONS } from '../models';
 import SpeedDial from '../components/SpeedDial';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 
@@ -106,6 +107,7 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [sort, setSort] = useState<SortOption>('date_desc');
   const { themeName, theme, toggleTheme } = useTheme();
 
   const searchPanelHeight = useRef(new Animated.Value(0)).current;
@@ -135,10 +137,10 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
     setLoading(true);
     const isFiltering = query.trim().length > 0 || selectedTagIds.length > 0 || selectedCategoryIds.length > 0;
     const fetch = isFiltering
-      ? searchRecipes(query, selectedTagIds, selectedCategoryIds)
-      : getAllRecipes();
+      ? searchRecipes(query, selectedTagIds, selectedCategoryIds, sort)
+      : getAllRecipes(sort);
     fetch.then(setRecipes).finally(() => setLoading(false));
-  }, [query, selectedTagIds, selectedCategoryIds]);
+  }, [query, selectedTagIds, selectedCategoryIds, sort]);
 
   function openSearch(): void {
     setSearchOpen(true);
@@ -172,11 +174,11 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
     );
   }, []);
 
-  const tagPanelMaxHeight = searchPanelHeight.interpolate({
+  const panelMaxHeight = searchPanelHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 200],
+    outputRange: [0, 260],
   });
-  const tagPanelOpacity = searchPanelHeight.interpolate({
+  const panelOpacity = searchPanelHeight.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [0, 0, 1],
   });
@@ -184,6 +186,8 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
   const themeStyles = getThemeStyles(theme);
 
   const isFiltering = selectedCategoryIds.length > 0 || selectedTagIds.length > 0 || query.trim().length > 0;
+  const isNonDefaultSort = sort !== 'date_desc';
+  const activeSortLabel = SORT_OPTIONS.find(o => o.value === sort)?.label ?? '';
 
   return (
     <View style={[styles.container, themeStyles.container]}>
@@ -235,17 +239,24 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
             <Text style={[styles.searchPlaceholderText, themeStyles.searchPlaceholderText]}>
               {isFiltering ? 'Filtering…' : 'Search recipes…'}
             </Text>
+            {isNonDefaultSort && (
+              <View style={[styles.sortBadge, { backgroundColor: theme.accent }]}>
+                <Text style={[styles.sortBadgeText, { color: theme.surface }]}>{activeSortLabel}</Text>
+              </View>
+            )}
           </Pressable>
         )}
       </View>
 
-      {/* ── Tag panel (visible when search open) ── */}
-      <Animated.View style={[styles.tagPanel, themeStyles.tagPanel, { maxHeight: tagPanelMaxHeight, opacity: tagPanelOpacity }]}>
-        <Text style={[styles.tagPanelLabel, themeStyles.tagPanelLabel]}>Filter by tag</Text>
+      {/* ── Search panel (tags + sort, visible when search open) ── */}
+      <Animated.View style={[styles.searchPanel, themeStyles.tagPanel, { maxHeight: panelMaxHeight, opacity: panelOpacity }]}>
+
+        {/* Filter by tag */}
+        <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Filter by tag</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tagPanelContent}
+          contentContainerStyle={styles.panelContent}
         >
           {tags.map(tag => {
             const active = selectedTagIds.includes(tag.id);
@@ -262,6 +273,30 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
             );
           })}
         </ScrollView>
+
+        {/* Sort by */}
+        <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Sort by</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.panelContent, styles.panelContentLast]}
+        >
+          {SORT_OPTIONS.map(option => {
+            const active = sort === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => setSort(option.value)}
+                style={[styles.tagChip, themeStyles.tagChip, active && styles.tagChipActive, active && themeStyles.tagChipActive]}
+              >
+                <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
       </Animated.View>
 
       {/* ── Recipe grid ── */}
@@ -360,8 +395,18 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   searchPlaceholderText: {
+    flex: 1,
     fontSize: 15,
     color: '#999',
+  },
+  sortBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sortBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   searchInputRow: {
     flexDirection: 'row',
@@ -385,14 +430,14 @@ const styles = StyleSheet.create({
     color: '#555',
   },
 
-  // Tag panel
-  tagPanel: {
+  // Search panel
+  searchPanel: {
     backgroundColor: '#fff',
     overflow: 'hidden',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  tagPanelLabel: {
+  panelLabel: {
     fontSize: 11,
     fontWeight: '600',
     color: '#aaa',
@@ -402,10 +447,13 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 6,
   },
-  tagPanelContent: {
+  panelContent: {
     paddingHorizontal: 14,
     paddingBottom: 10,
     gap: 8,
+  },
+  panelContentLast: {
+    paddingBottom: 14,
   },
   tagChip: {
     paddingHorizontal: 12,
