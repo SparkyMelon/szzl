@@ -74,11 +74,12 @@ export async function getRecipeById(id: number): Promise<Recipe | null> {
 export async function searchRecipes(
   query: string,
   tagIds: number[],
+  categoryIds: number[],
   sort: SortOption = 'date_desc',
 ): Promise<Recipe[]> {
   const db = await getDB();
   const conditions: string[] = [];
-  const params: unknown[] = [];
+  const params: Array<string | number | null> = [];
 
   if (query.trim()) {
     conditions.push(`r.title LIKE ?`);
@@ -94,6 +95,17 @@ export async function searchRecipes(
       )
     `);
     params.push(...tagIds);
+  }
+
+  if (categoryIds.length > 0) {
+    conditions.push(`
+      EXISTS (
+        SELECT 1 FROM recipe_categories rc
+        WHERE rc.recipe_id = r.id
+        AND rc.category_id IN (${categoryIds.map(() => '?').join(',')})
+      )
+    `);
+    params.push(...categoryIds);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
