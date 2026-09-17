@@ -10,6 +10,7 @@ import RecipeDetailScreen from './screens/RecipeDetailsScreen';
 import RecipeEditScreen from './screens/RecipeEditScreen';
 import RecipeCreateScreen from './screens/RecipeCreateScreen';
 import { ThemeProvider, useTheme } from './lib/theme';
+import type { SortOption } from './models';
 
 type Screen =
   | { name: 'list' }
@@ -23,6 +24,10 @@ function AppContent() {
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
   const [debugVisible, setDebugVisible] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<number[]>([]);
+  const [tagFilter, setTagFilter] = useState<number[]>([]);
+  const [favouritesOnly, setFavouritesOnly] = useState(false);
+  const [sort, setSort] = useState<SortOption>('date_desc');
   const [toast, setToast] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
@@ -53,6 +58,14 @@ function AppContent() {
               onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
               onCreateRecipe={() => setScreen({ name: 'create' })}
               onOpenDevMode={() => setDebugVisible(true)}
+              selectedCategoryIds={categoryFilter}
+              onCategoryIdsChange={setCategoryFilter}
+              selectedTagIds={tagFilter}
+              onTagIdsChange={setTagFilter}
+              favouritesOnly={favouritesOnly}
+              onFavouritesOnlyChange={setFavouritesOnly}
+              sort={sort}
+              onSortChange={setSort}
             />
           )}
           {screen.name === 'detail' && (

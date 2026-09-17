@@ -36,8 +36,8 @@ export type SortOption =
 export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'date_desc',   label: 'Newest first' },
   { value: 'date_asc',    label: 'Oldest first' },
-  { value: 'title_asc',   label: 'A → Z' },
-  { value: 'title_desc',  label: 'Z → A' },
+  { value: 'title_asc',   label: 'Title (A-Z)' },
+  { value: 'title_desc',  label: 'Title (Z-A)' },
   { value: 'rating_desc', label: 'Top rated' },
   { value: 'rating_asc',  label: 'Lowest rated' },
 ];

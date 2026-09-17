@@ -44,4 +44,14 @@ describe('recipeRepository.searchRecipes', () => {
       [5, 7],
     );
   });
+
+  it('adds a favourites-only condition when requested', async () => {
+    await searchRecipes('', [], [], 'date_desc', true);
+
+    expect(mockGetAllAsync).toHaveBeenCalledTimes(1);
+    expect(mockGetAllAsync).toHaveBeenCalledWith(
+      expect.stringContaining('r.is_favourite = 1'),
+      [],
+    );
+  });
 });

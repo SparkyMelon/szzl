@@ -19,8 +19,9 @@ import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import type { Category, Recipe, SortOption, Tag } from '../models';
-import { SORT_OPTIONS } from '../models';
 import SpeedDial from '../components/SpeedDial';
+import TagManagerModal from '../components/TagManagerModal';
+import SortMenu from '../components/SortMenu';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 
 // ── Star Rating Display ───────────────────────────────────────────
@@ -96,18 +97,37 @@ interface Props {
   onSelectRecipe: (id: number) => void;
   onCreateRecipe: () => void;
   onOpenDevMode: () => void;
+  selectedCategoryIds: number[];
+  onCategoryIdsChange: (ids: number[]) => void;
+  selectedTagIds: number[];
+  onTagIdsChange: (ids: number[]) => void;
+  favouritesOnly: boolean;
+  onFavouritesOnlyChange: (value: boolean) => void;
+  sort: SortOption;
+  onSortChange: (sort: SortOption) => void;
 }
 
-export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpenDevMode }: Props) {
+export default function RecipeListScreen({
+  onSelectRecipe,
+  onCreateRecipe,
+  onOpenDevMode,
+  selectedCategoryIds,
+  onCategoryIdsChange,
+  selectedTagIds,
+  onTagIdsChange,
+  favouritesOnly,
+  onFavouritesOnlyChange,
+  sort,
+  onSortChange,
+}: Props) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [sort, setSort] = useState<SortOption>('date_desc');
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const { themeName, theme, toggleTheme } = useTheme();
 
   const searchPanelHeight = useRef(new Animated.Value(0)).current;
@@ -116,9 +136,17 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    getAllTags().then(setTags);
+    refreshTags();
     getAllCategories().then(setCategories);
   }, []);
+
+  function refreshTags(): void {
+    getAllTags().then(freshTags => {
+      setTags(freshTags);
+      const validIds = new Set(freshTags.map(t => t.id));
+      onTagIdsChange(selectedTagIds.filter(id => validIds.has(id)));
+    });
+  }
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', (event) => {
@@ -135,12 +163,12 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
 
   useEffect(() => {
     setLoading(true);
-    const isFiltering = query.trim().length > 0 || selectedTagIds.length > 0 || selectedCategoryIds.length > 0;
+    const isFiltering = query.trim().length > 0 || selectedTagIds.length > 0 || selectedCategoryIds.length > 0 || favouritesOnly;
     const fetch = isFiltering
-      ? searchRecipes(query, selectedTagIds, selectedCategoryIds, sort)
+      ? searchRecipes(query, selectedTagIds, selectedCategoryIds, sort, favouritesOnly)
       : getAllRecipes(sort);
     fetch.then(setRecipes).finally(() => setLoading(false));
-  }, [query, selectedTagIds, selectedCategoryIds, sort]);
+  }, [query, selectedTagIds, selectedCategoryIds, favouritesOnly, sort]);
 
   function openSearch(): void {
     setSearchOpen(true);
@@ -152,9 +180,11 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
   }
 
   function closeSearch(): void {
+    // "Done" only discards the in-progress text search — meal type and tag
+    // selections are persistent filters, not part of the text search, so they
+    // stay active until the user taps them off (or navigates away and back).
     searchInputRef.current?.blur();
     setQuery('');
-    setSelectedTagIds([]);
     Animated.timing(searchPanelHeight, {
       toValue: 0,
       duration: 180,
@@ -162,17 +192,24 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
     }).start(() => setSearchOpen(false));
   }
 
+  function clearAllFilters(): void {
+    setQuery('');
+    onCategoryIdsChange([]);
+    onTagIdsChange([]);
+    onFavouritesOnlyChange(false);
+  }
+
   const toggleCategory = useCallback((id: number) => {
-    setSelectedCategoryIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  }, []);
+    // Meal type is single-select: picking one replaces any previous selection,
+    // tapping the active one clears it. Tags (below) stay multi-select.
+    onCategoryIdsChange(selectedCategoryIds.length === 1 && selectedCategoryIds[0] === id ? [] : [id]);
+  }, [selectedCategoryIds, onCategoryIdsChange]);
 
   const toggleTag = useCallback((id: number) => {
-    setSelectedTagIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    onTagIdsChange(
+      selectedTagIds.includes(id) ? selectedTagIds.filter(x => x !== id) : [...selectedTagIds, id]
     );
-  }, []);
+  }, [selectedTagIds, onTagIdsChange]);
 
   const panelMaxHeight = searchPanelHeight.interpolate({
     inputRange: [0, 1],
@@ -185,78 +222,120 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
 
   const themeStyles = getThemeStyles(theme);
 
-  const isFiltering = selectedCategoryIds.length > 0 || selectedTagIds.length > 0 || query.trim().length > 0;
+  const isFiltering = selectedCategoryIds.length > 0 || selectedTagIds.length > 0 || favouritesOnly || query.trim().length > 0;
   const isNonDefaultSort = sort !== 'date_desc';
-  const activeSortLabel = SORT_OPTIONS.find(o => o.value === sort)?.label ?? '';
+
+  const activeCategoryName = selectedCategoryIds.length === 1
+    ? categories.find(c => c.id === selectedCategoryIds[0])?.name
+    : undefined;
+  const filterSummary = [
+    activeCategoryName,
+    selectedTagIds.length > 0 ? `${selectedTagIds.length} tag${selectedTagIds.length > 1 ? 's' : ''}` : null,
+  ].filter(Boolean).join(', ');
+  const placeholderText = filterSummary || (isFiltering ? 'Filtering…' : 'Search recipes…');
+
+  function handleBackgroundPress(): void {
+    if (searchOpen) closeSearch();
+  }
 
   return (
-    <View style={[styles.container, themeStyles.container]}>
-
-      {/* ── Category strip ── */}
-      <View style={[styles.categoryBar, themeStyles.categoryBar]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryContent}
-        >
-          {categories.map(cat => {
-            const active = selectedCategoryIds.includes(cat.id);
-            return (
-              <Pressable
-                key={cat.id}
-                onPress={() => toggleCategory(cat.id)}
-                style={[styles.categoryChip, themeStyles.categoryChip, active && styles.categoryChipActive, active && themeStyles.categoryChipActive]}
-              >
-                <Text style={[styles.categoryChipText, themeStyles.categoryChipText, active && styles.categoryChipTextActive, active && themeStyles.categoryChipTextActive]}>
-                  {cat.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
+    <Pressable style={[styles.container, themeStyles.container]} onPress={handleBackgroundPress}>
 
       {/* ── Search bar ── */}
       <View style={[styles.searchRow, themeStyles.searchRow]}>
-        {searchOpen ? (
-          <View style={styles.searchInputRow}>
-            <TextInput
-              ref={searchInputRef}
-              style={[styles.searchInput, themeStyles.searchInput]}
-              placeholder="Search recipes..."
-              placeholderTextColor={theme.placeholderText}
-              value={query}
-              onChangeText={setQuery}
-              returnKeyType="search"
-            />
-            <Pressable onPress={closeSearch} style={styles.searchCancelButton}>
-              <Text style={[styles.searchCancelText, themeStyles.searchCancelText]}>Cancel</Text>
+        <View style={styles.searchRowMain}>
+          {searchOpen ? (
+            <View style={styles.searchInputRow}>
+              <TextInput
+                ref={searchInputRef}
+                style={[styles.searchInput, themeStyles.searchInput]}
+                placeholder="Search recipes..."
+                placeholderTextColor={theme.placeholderText}
+                value={query}
+                onChangeText={setQuery}
+                returnKeyType="search"
+              />
+              <Pressable onPress={closeSearch} style={styles.searchCancelButton} hitSlop={8}>
+                <Feather name="check" size={20} color={theme.accent} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable style={[styles.searchPlaceholder, themeStyles.searchPlaceholder]} onPress={openSearch}>
+              <Feather name="search" size={18} color={theme.textSecondary} />
+              <Text style={[styles.searchPlaceholderText, themeStyles.searchPlaceholderText]} numberOfLines={1}>
+                {placeholderText}
+              </Text>
             </Pressable>
-          </View>
-        ) : (
-          <Pressable style={[styles.searchPlaceholder, themeStyles.searchPlaceholder]} onPress={openSearch}>
-            <Feather name="search" size={18} color={theme.textSecondary} />
-            <Text style={[styles.searchPlaceholderText, themeStyles.searchPlaceholderText]}>
-              {isFiltering ? 'Filtering…' : 'Search recipes…'}
-            </Text>
-            {isNonDefaultSort && (
-              <View style={[styles.sortBadge, { backgroundColor: theme.accent }]}>
-                <Text style={[styles.sortBadgeText, { color: theme.surface }]}>{activeSortLabel}</Text>
-              </View>
-            )}
-          </Pressable>
+          )}
+        </View>
+        {!searchOpen && (
+          <>
+            <Pressable
+              onPress={() => onFavouritesOnlyChange(!favouritesOnly)}
+              style={[styles.sortButton, { backgroundColor: favouritesOnly ? '#f5a623' : theme.surfaceMuted }]}
+            >
+              <Feather name="star" size={18} color={favouritesOnly ? '#fff' : theme.textSecondary} />
+            </Pressable>
+            <Pressable
+              onPress={() => setSortMenuOpen(true)}
+              style={[styles.sortButton, { backgroundColor: isNonDefaultSort ? theme.accent : theme.surfaceMuted }]}
+            >
+              <Feather name="sliders" size={18} color={isNonDefaultSort ? theme.surface : theme.textSecondary} />
+            </Pressable>
+          </>
         )}
       </View>
 
-      {/* ── Search panel (tags + sort, visible when search open) ── */}
+      {/* ── Search panel (meal type + tags, visible when search open) ── */}
       <Animated.View style={[styles.searchPanel, themeStyles.tagPanel, { maxHeight: panelMaxHeight, opacity: panelOpacity }]}>
 
+        {isFiltering && (
+          <View style={styles.clearAllRow}>
+            <Pressable onPress={clearAllFilters} style={styles.clearAllButton} hitSlop={8}>
+              <Feather name="x" size={12} color={theme.textSecondary} />
+              <Text style={[styles.clearAllText, { color: theme.textSecondary }]}>Clear all</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Meal type */}
+        {categories.length > 0 && (
+          <>
+            <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Meal type</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.panelContent}
+            >
+              {categories.map(cat => {
+                const active = selectedCategoryIds.includes(cat.id);
+                return (
+                  <Pressable
+                    key={cat.id}
+                    onPress={() => toggleCategory(cat.id)}
+                    style={[styles.tagChip, themeStyles.tagChip, active && styles.tagChipActive, active && themeStyles.tagChipActive]}
+                  >
+                    <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
+                      {cat.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
+
         {/* Filter by tag */}
-        <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Filter by tag</Text>
+        <View style={styles.panelLabelRow}>
+          <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Filter by tag</Text>
+          <Pressable onPress={() => setManageTagsOpen(true)} hitSlop={8} style={styles.manageTagsButton}>
+            <Feather name="edit-2" size={13} color={theme.textSecondary} />
+          </Pressable>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.panelContent}
+          contentContainerStyle={[styles.panelContent, styles.panelContentLast]}
         >
           {tags.map(tag => {
             const active = selectedTagIds.includes(tag.id);
@@ -268,29 +347,6 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
               >
                 <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
                   {tag.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        {/* Sort by */}
-        <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Sort by</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.panelContent, styles.panelContentLast]}
-        >
-          {SORT_OPTIONS.map(option => {
-            const active = sort === option.value;
-            return (
-              <Pressable
-                key={option.value}
-                onPress={() => setSort(option.value)}
-                style={[styles.tagChip, themeStyles.tagChip, active && styles.tagChipActive, active && themeStyles.tagChipActive]}
-              >
-                <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
-                  {option.label}
                 </Text>
               </Pressable>
             );
@@ -331,7 +387,20 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
           ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings' as const, onPress: onOpenDevMode }] : []),
         ]}
       />
-    </View>
+
+      <TagManagerModal
+        visible={manageTagsOpen}
+        onClose={() => setManageTagsOpen(false)}
+        onChange={refreshTags}
+      />
+
+      <SortMenu
+        visible={sortMenuOpen}
+        sort={sort}
+        onSelect={onSortChange}
+        onClose={() => setSortMenuOpen(false)}
+      />
+    </Pressable>
   );
 }
 
@@ -343,43 +412,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
   },
 
-  // Category strip
-  categoryBar: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  categoryContent: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  categoryChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-  },
-  categoryChipActive: {
-    backgroundColor: '#111',
-    borderColor: '#111',
-  },
-  categoryChipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#555',
-  },
-  categoryChipTextActive: {
-    color: '#fff',
-  },
-
   // Search bar
   searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
+    gap: 10,
     backgroundColor: '#fff',
+  },
+  searchRowMain: {
+    flex: 1,
+  },
+  sortButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchPlaceholder: {
     flexDirection: 'row',
@@ -394,15 +444,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: '#999',
-  },
-  sortBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  sortBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
   searchInputRow: {
     flexDirection: 'row',
@@ -419,11 +460,7 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   searchCancelButton: {
-    paddingVertical: 4,
-  },
-  searchCancelText: {
-    fontSize: 15,
-    color: '#555',
+    paddingHorizontal: 4,
   },
 
   // Search panel
@@ -432,6 +469,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  clearAllRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+  },
+  clearAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  clearAllText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   panelLabel: {
     fontSize: 11,
@@ -442,6 +494,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 10,
     paddingBottom: 6,
+  },
+  panelLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  manageTagsButton: {
+    paddingRight: 14,
+    paddingLeft: 4,
   },
   panelContent: {
     paddingHorizontal: 14,

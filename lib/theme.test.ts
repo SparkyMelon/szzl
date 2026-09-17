@@ -4,8 +4,8 @@ describe('theme utilities', () => {
   it('returns styling values that match the selected theme palette', () => {
     const lightStyles = getThemeStyles(themes.light);
     expect(lightStyles.container).toEqual({ backgroundColor: themes.light.background });
-    expect(lightStyles.categoryChipActive).toEqual({
-      backgroundColor: themes.light.accent,
+    expect(lightStyles.tagChipActive).toEqual({
+      backgroundColor: themes.light.surface,
       borderColor: themes.light.accent,
     });
 
