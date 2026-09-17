@@ -5,12 +5,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../lib/theme';
 
 // ── SpeedDial ─────────────────────────────────────────────────────
 
-export type SpeedDialIconType = 'add' | 'settings-outline' | 'sunny' | 'moon';
+export type SpeedDialIconType = 'plus' | 'settings' | 'sun' | 'moon';
 
 export interface SpeedDialAction {
   label: string;
@@ -42,7 +42,7 @@ export default function SpeedDial({ actions }: Props) {
                 style={({ pressed }) => [styles.actionButton, { backgroundColor: theme.fab }, pressed && styles.buttonPressed]}
                 onPress={() => handleActionPress(action)}
               >
-                <Ionicons name={action.icon} size={22} color={theme.fabIcon} />
+                <Feather name={action.icon} size={24} color={theme.fabIcon} />
               </Pressable>
             </View>
           ))}
@@ -53,7 +53,7 @@ export default function SpeedDial({ actions }: Props) {
         style={({ pressed }) => [styles.fab, { backgroundColor: theme.fab }, pressed && styles.buttonPressed]}
         onPress={() => setOpen(prev => !prev)}
       >
-        <Ionicons name={open ? 'close' : 'ellipsis-horizontal'} size={24} color={theme.fabIcon} />
+        <Feather name={open ? 'x' : 'more-horizontal'} size={26} color={theme.fabIcon} />
       </Pressable>
     </View>
   );
@@ -92,9 +92,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   actionButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#333',
     alignItems: 'center',
     justifyContent: 'center',
@@ -105,9 +105,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fab: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: '#111',
     alignItems: 'center',
     justifyContent: 'center',

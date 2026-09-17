@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { deleteRecipe, getRecipeById, toggleFavourite } from '../repositories/recipeRepository';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Recipe } from '../models';
@@ -315,28 +315,28 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
           onPress={onBack}
           style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
         >
-          <Ionicons name="chevron-back" size={22} color="#fff" />
+          <Feather name="chevron-left" size={24} color="#fff" />
         </Pressable>
         <View style={styles.headerRight}>
           <Pressable
             onPress={() => setConfirmDelete(true)}
             style={({ pressed }) => [styles.headerButton, styles.headerButtonDanger, pressed && styles.headerButtonPressed]}
           >
-            <Ionicons name="trash-outline" size={20} color="#fff" />
+            <Feather name="trash-2" size={22} color="#fff" />
           </Pressable>
           <Pressable
             onPress={handleShare}
             style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
           >
-            <Ionicons name="share-outline" size={20} color="#fff" />
+            <Feather name="share-2" size={22} color="#fff" />
           </Pressable>
           <Pressable
             onPress={handleToggleFavourite}
             style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
           >
-            <Ionicons
-              name={isFav ? 'star' : 'star-outline'}
-              size={20}
+            <Feather
+              name="star"
+              size={22}
               color={isFav ? '#f5a623' : '#fff'}
             />
           </Pressable>
@@ -344,7 +344,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
             onPress={() => onEdit(recipe.id)}
             style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}
           >
-            <Ionicons name="pencil-outline" size={20} color="#fff" />
+            <Feather name="edit-2" size={22} color="#fff" />
           </Pressable>
         </View>
       </View>
@@ -447,9 +447,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.35)',
     alignItems: 'center',
     justifyContent: 'center',

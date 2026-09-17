@@ -13,7 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
@@ -56,9 +56,9 @@ function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress:
           </View>
         )}
         {isFav && (
-          <Ionicons
+          <Feather
             name="star"
-            size={16}
+            size={22}
             color="#f5a623"
             style={styles.favIcon}
           />
@@ -235,7 +235,7 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
           </View>
         ) : (
           <Pressable style={[styles.searchPlaceholder, themeStyles.searchPlaceholder]} onPress={openSearch}>
-            <Text style={[styles.searchPlaceholderIcon, themeStyles.searchPlaceholderIcon]}>⌕</Text>
+            <Feather name="search" size={18} color={theme.textSecondary} />
             <Text style={[styles.searchPlaceholderText, themeStyles.searchPlaceholderText]}>
               {isFiltering ? 'Filtering…' : 'Search recipes…'}
             </Text>
@@ -324,11 +324,11 @@ export default function RecipeListScreen({ onSelectRecipe, onCreateRecipe, onOpe
         actions={[
           {
             label: themeName === 'light' ? 'Dark mode' : 'Light mode',
-            icon: themeName === 'light' ? 'moon' : 'sunny',
+            icon: themeName === 'light' ? 'moon' : 'sun',
             onPress: toggleTheme,
           },
-          { label: 'New recipe', icon: 'add', onPress: onCreateRecipe },
-          ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings-outline' as const, onPress: onOpenDevMode }] : []),
+          { label: 'New recipe', icon: 'plus', onPress: onCreateRecipe },
+          ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings' as const, onPress: onOpenDevMode }] : []),
         ]}
       />
     </View>
@@ -389,10 +389,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
-  },
-  searchPlaceholderIcon: {
-    fontSize: 17,
-    color: '#999',
   },
   searchPlaceholderText: {
     flex: 1,

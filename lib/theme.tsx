@@ -102,7 +102,6 @@ export function getThemeStyles(theme: Theme) {
     categoryChipTextActive: { color: theme.surface },
     searchRow: { backgroundColor: theme.surface },
     searchPlaceholder: { backgroundColor: theme.surfaceMuted },
-    searchPlaceholderIcon: { color: theme.textSecondary },
     searchPlaceholderText: { color: theme.textSecondary },
     searchInput: { backgroundColor: theme.inputBackground, color: theme.text, borderColor: theme.inputBorder },
     searchCancelText: { color: theme.accent },
