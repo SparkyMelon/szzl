@@ -9,7 +9,7 @@ import RecipeListScreen from './screens/RecipeListScreen';
 import RecipeDetailScreen from './screens/RecipeDetailsScreen';
 import RecipeEditScreen from './screens/RecipeEditScreen';
 import RecipeCreateScreen from './screens/RecipeCreateScreen';
-import { ThemeProvider } from './lib/theme';
+import { ThemeProvider, useTheme } from './lib/theme';
 
 type Screen =
   | { name: 'list' }
@@ -17,7 +17,8 @@ type Screen =
   | { name: 'edit'; recipeId: number }
   | { name: 'create' };
 
-export default function App() {
+function AppContent() {
+  const { theme } = useTheme();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
@@ -46,10 +47,8 @@ export default function App() {
   if (!ready) return <ActivityIndicator />;
 
   return (
-    <ThemeProvider>
-      <SafeAreaProvider>
-        <SafeAreaView style={styles.container}>
-          {screen.name === 'list' && (
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      {screen.name === 'list' && (
             <RecipeListScreen
               onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
               onCreateRecipe={() => setScreen({ name: 'create' })}
@@ -93,6 +92,14 @@ export default function App() {
             </Animated.View>
           )}
         </SafeAreaView>
+      );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <AppContent />
       </SafeAreaProvider>
     </ThemeProvider>
   );
@@ -101,7 +108,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   toast: {
     position: 'absolute',
