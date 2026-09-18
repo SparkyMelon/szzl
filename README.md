@@ -1,4 +1,4 @@
-# Szzl
+# Sizzle
 This is a cookbook app.
 
 ## MVP remaining tasks

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "szzl",
+    "name": "Sizzle",
     "slug": "szzl",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#C1833D"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.sparkymelon.szzl"
@@ -29,7 +29,7 @@
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#C1833D"
         }
       ]
     ],
