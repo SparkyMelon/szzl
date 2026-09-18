@@ -23,14 +23,15 @@ import SpeedDial from '../components/SpeedDial';
 import TagManagerModal from '../components/TagManagerModal';
 import SortMenu from '../components/SortMenu';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
+import type { Theme } from '../lib/theme';
 
 // ── Star Rating Display ───────────────────────────────────────────
 
-function StarRating({ rating, size = 10 }: { rating: number; size?: number }) {
+function StarRating({ rating, size = 10, theme }: { rating: number; size?: number; theme: Theme }) {
   return (
     <View style={styles.starRow}>
       {[1, 2, 3, 4, 5].map(i => (
-        <Text key={i} style={[styles.starIcon, { fontSize: size, color: i <= rating ? '#f5a623' : '#ddd' }]}>
+        <Text key={i} style={[styles.starIcon, { fontSize: size, color: i <= rating ? theme.accent : theme.border }]}>
           ★
         </Text>
       ))}
@@ -40,7 +41,7 @@ function StarRating({ rating, size = 10 }: { rating: number; size?: number }) {
 
 // ── Recipe Card ───────────────────────────────────────────────────
 
-function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress: () => void; themeStyles: Record<string, any> }) {
+function RecipeCard({ recipe, onPress, theme, themeStyles }: { recipe: Recipe; onPress: () => void; theme: Theme; themeStyles: Record<string, any> }) {
   const isFav = recipe.isFavourite === 1;
 
   return (
@@ -60,7 +61,7 @@ function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress:
           <Feather
             name="star"
             size={22}
-            color="#f5a623"
+            color={theme.accent}
             style={styles.favIcon}
           />
         )}
@@ -75,7 +76,7 @@ function RecipeCard({ recipe, onPress, themeStyles }: { recipe: Recipe; onPress:
           </View>
         )}
         {recipe.rating != null && (
-          <StarRating rating={recipe.rating} size={10} />
+          <StarRating rating={recipe.rating} size={10} theme={theme} />
         )}
         {recipe.categories && recipe.categories.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagRow}>
@@ -272,9 +273,9 @@ export default function RecipeListScreen({
           <>
             <Pressable
               onPress={() => onFavouritesOnlyChange(!favouritesOnly)}
-              style={[styles.sortButton, { backgroundColor: favouritesOnly ? '#f5a623' : theme.surfaceMuted }]}
+              style={[styles.sortButton, { backgroundColor: favouritesOnly ? theme.accent : theme.surfaceMuted }]}
             >
-              <Feather name="star" size={18} color={favouritesOnly ? '#fff' : theme.textSecondary} />
+              <Feather name="star" size={18} color={favouritesOnly ? theme.surface : theme.textSecondary} />
             </Pressable>
             <Pressable
               onPress={() => setSortMenuOpen(true)}
@@ -371,7 +372,7 @@ export default function RecipeListScreen({
           contentContainerStyle={[styles.grid, { paddingBottom: insets.bottom + 24 + keyboardHeight }]}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <RecipeCard recipe={item} onPress={() => onSelectRecipe(item.id)} themeStyles={themeStyles} />
+            <RecipeCard recipe={item} onPress={() => onSelectRecipe(item.id)} theme={theme} themeStyles={themeStyles} />
           )}
         />
       )}

@@ -22,8 +22,8 @@ describe('theme utilities', () => {
     expect(EFFORT_LABELS.medium).toBe('Medium');
     expect(EFFORT_LABELS.hard).toBe('Hard');
 
-    expect(EFFORT_COLOURS.easy).toBe('#2ecc71');
-    expect(EFFORT_COLOURS.medium).toBe('#f39c12');
-    expect(EFFORT_COLOURS.hard).toBe('#e74c3c');
+    expect(EFFORT_COLOURS.easy).toBe('#6E8F4E');
+    expect(EFFORT_COLOURS.medium).toBe('#C99A2E');
+    expect(EFFORT_COLOURS.hard).toBe('#C6644C');
   });
 });

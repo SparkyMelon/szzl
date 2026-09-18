@@ -13,6 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { deleteRecipe, getRecipeById, toggleFavourite } from '../repositories/recipeRepository';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
+import type { Theme } from '../lib/theme';
 import type { Recipe } from '../models';
 
 const HERO_HEIGHT = 280;
@@ -29,11 +30,11 @@ interface Props {
 
 // ── Star Rating Display ───────────────────────────────────────────
 
-function StarRating({ rating }: { rating: number }) {
+function StarRating({ rating, theme }: { rating: number; theme: Theme }) {
   return (
     <View style={styles.starRow}>
       {[1, 2, 3, 4, 5].map(i => (
-        <Text key={i} style={[styles.starIcon, { color: i <= rating ? '#f5a623' : '#ddd' }]}>
+        <Text key={i} style={[styles.starIcon, { color: i <= rating ? theme.accent : theme.border }]}>
           ★
         </Text>
       ))}
@@ -85,7 +86,7 @@ function StepsTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record
 
 // ── Info Tab ──────────────────────────────────────────────────────
 
-function InfoTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<string, any> }) {
+function InfoTab({ recipe, theme, themeStyles }: { recipe: Recipe; theme: Theme; themeStyles: Record<string, any> }) {
   return (
     <View style={styles.tabContent}>
 
@@ -121,7 +122,7 @@ function InfoTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<
       {recipe.rating != null && (
         <View style={styles.infoSection}>
           <Text style={[styles.infoSectionTitle, themeStyles.infoSectionTitle]}>Rating</Text>
-          <StarRating rating={recipe.rating} />
+          <StarRating rating={recipe.rating} theme={theme} />
         </View>
       )}
 
@@ -337,7 +338,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
             <Feather
               name="star"
               size={22}
-              color={isFav ? '#f5a623' : '#fff'}
+              color={isFav ? theme.accent : '#fff'}
             />
           </Pressable>
           <Pressable
@@ -384,7 +385,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
 
           {activeTab === 'ingredients' && <IngredientsTab recipe={recipe} themeStyles={themeStyles} />}
           {activeTab === 'steps' && <StepsTab recipe={recipe} themeStyles={themeStyles} />}
-          {activeTab === 'info' && <InfoTab recipe={recipe} themeStyles={themeStyles} />}
+          {activeTab === 'info' && <InfoTab recipe={recipe} theme={theme} themeStyles={themeStyles} />}
 
         </View>
       </Animated.ScrollView>

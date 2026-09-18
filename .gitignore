@@ -42,3 +42,6 @@ yarn-error.*
 
 # Misc
 assets/old/*
+
+# Brainstorming companion mockups
+.superpowers/

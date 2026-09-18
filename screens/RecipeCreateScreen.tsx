@@ -220,7 +220,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         <View style={styles.ratingRow}>
           {[1, 2, 3, 4, 5].map(star => (
             <Pressable key={star} onPress={() => handleStarPress(star)} hitSlop={6}>
-              <Text style={[styles.ratingStar, { color: rating != null && star <= rating ? '#f5a623' : theme.surfaceAlt === '#242424' ? '#444' : '#ddd' }]}>
+              <Text style={[styles.ratingStar, { color: rating != null && star <= rating ? theme.accent : theme.border }]}>
                 ★
               </Text>
             </Pressable>
