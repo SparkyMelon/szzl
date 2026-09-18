@@ -305,7 +305,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
           <Image source={{ uri: recipe.imageUri }} style={styles.heroImage} />
         ) : (
           <View style={[styles.heroPlaceholder, themeStyles.heroPlaceholder]}>
-            <Text style={styles.heroPlaceholderText}>🍽</Text>
+            <Feather name="image" size={40} color={theme.textSecondary} />
           </View>
         )}
       </Animated.View>
@@ -425,9 +425,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8e8e8',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  heroPlaceholderText: {
-    fontSize: 64,
   },
 
   // Header

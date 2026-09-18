@@ -54,7 +54,7 @@ function RecipeCard({ recipe, onPress, theme, themeStyles }: { recipe: Recipe; o
           <Image source={{ uri: recipe.imageUri }} style={styles.image} />
         ) : (
           <View style={[styles.imagePlaceholder, themeStyles.imagePlaceholder]}>
-            <Text style={styles.imagePlaceholderText}>🍽</Text>
+            <Feather name="image" size={24} color={theme.textSecondary} />
           </View>
         )}
         {isFav && (
@@ -584,9 +584,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  imagePlaceholderText: {
-    fontSize: 32,
   },
   favIcon: {
     position: 'absolute',

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,10 +11,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { UnitPicker } from '../components/UnitPicker';
 import { getRecipeById, updateRecipe } from '../repositories/recipeRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import { getAllTags } from '../repositories/tagRepository';
+import { pickRecipeImage } from '../lib/images';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Category, Effort, IngredientUnit, Tag } from '../models';
 import { INGREDIENT_UNITS } from '../models';
@@ -59,6 +62,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
 
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [steps, setSteps] = useState<StepDraft[]>([]);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -84,6 +88,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         setCookTime(recipe.cookTime != null ? String(recipe.cookTime) : '');
         setServings(recipe.servings != null ? String(recipe.servings) : '');
         setRating(recipe.rating);
+        setImageUri(recipe.imageUri);
         setIngredients(
           (recipe.ingredients ?? []).map(ing => ({
             key: nextKey(),
@@ -149,6 +154,11 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
     setRating(prev => (prev === star ? null : star));
   }
 
+  async function handlePickImage(): Promise<void> {
+    const uri = await pickRecipeImage();
+    if (uri) setImageUri(uri);
+  }
+
   async function handleSave(): Promise<void> {
     if (!title.trim()) {
       setError('Title is required');
@@ -165,6 +175,7 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
         cookTime: cookTime ? parseInt(cookTime, 10) : null,
         servings: servings ? parseInt(servings, 10) : null,
         rating,
+        imageUri,
         ingredients: ingredients
           .filter(ing => ing.name.trim())
           .map(ing => ({
@@ -214,6 +225,20 @@ export default function RecipeEditScreen({ recipeId, onBack, onSave }: Props) {
 
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]} keyboardShouldPersistTaps="handled">
         {error && <Text style={[styles.errorText, { color: theme.danger }]}>{error}</Text>}
+
+        <Pressable
+          style={[styles.imagePicker, { backgroundColor: theme.surfaceMuted }]}
+          onPress={handlePickImage}
+        >
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.imagePickerPhoto} />
+          ) : (
+            <View style={styles.imagePickerPlaceholder}>
+              <Feather name="image" size={28} color={theme.textSecondary} />
+              <Text style={[styles.imagePickerText, { color: theme.textSecondary }]}>Add photo</Text>
+            </View>
+          )}
+        </Pressable>
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Title *</Text>
         <TextInput
@@ -438,6 +463,27 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 48 },
   errorText: { color: '#e74c3c', fontSize: 14, marginBottom: 12 },
+  imagePicker: {
+    width: '100%',
+    height: 160,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  imagePickerPhoto: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePickerPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imagePickerText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
   label: {
     fontSize: 13, fontWeight: '600', color: '#888',
     textTransform: 'uppercase', letterSpacing: 0.4,

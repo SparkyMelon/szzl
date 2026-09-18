@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { getDB } from '../lib/database';
+import { deleteRecipeImage } from '../lib/images';
 import type { Category, Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
 import type { SortOption } from '../models';
 
@@ -154,6 +155,7 @@ export interface RecipeCreateInput {
   cookTime: number | null;
   servings: number | null;
   rating: number | null;
+  imageUri: string | null;
   ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
   steps: Array<{ instruction: string }>;
   tagIds: number[];
@@ -164,9 +166,9 @@ export async function createRecipe(input: RecipeCreateInput): Promise<number> {
   const db = await getDB();
 
   const result = await db.runAsync(
-    `INSERT INTO recipes (title, description, effort, prep_time, cook_time, servings, rating, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-    [input.title, input.description, input.effort, input.prepTime, input.cookTime, input.servings, input.rating]
+    `INSERT INTO recipes (title, description, effort, prep_time, cook_time, servings, rating, image_uri, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+    [input.title, input.description, input.effort, input.prepTime, input.cookTime, input.servings, input.rating, input.imageUri]
   );
 
   const id = result.lastInsertRowId as number;
@@ -200,6 +202,7 @@ export interface RecipeUpdateInput {
   cookTime: number | null;
   servings: number | null;
   rating: number | null;
+  imageUri: string | null;
   ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
   steps: Array<{ instruction: string }>;
   tagIds: number[];
@@ -209,13 +212,21 @@ export interface RecipeUpdateInput {
 export async function updateRecipe(id: number, input: RecipeUpdateInput): Promise<void> {
   const db = await getDB();
 
+  const existing = await db.getFirstAsync<{ imageUri: string | null }>(
+    `SELECT image_uri AS imageUri FROM recipes WHERE id = ?`, [id]
+  );
+
   await db.runAsync(
     `UPDATE recipes
      SET title = ?, description = ?, effort = ?, prep_time = ?, cook_time = ?,
-         servings = ?, rating = ?, updated_at = datetime('now')
+         servings = ?, rating = ?, image_uri = ?, updated_at = datetime('now')
      WHERE id = ?`,
-    [input.title, input.description, input.effort, input.prepTime, input.cookTime, input.servings, input.rating, id]
+    [input.title, input.description, input.effort, input.prepTime, input.cookTime, input.servings, input.rating, input.imageUri, id]
   );
+
+  if (existing?.imageUri && existing.imageUri !== input.imageUri) {
+    deleteRecipeImage(existing.imageUri);
+  }
 
   await db.runAsync(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`, [id]);
   for (let i = 0; i < input.ingredients.length; i++) {
@@ -248,5 +259,11 @@ export async function toggleFavourite(id: number): Promise<void> {
 
 export async function deleteRecipe(id: number): Promise<void> {
   const db = await getDB();
+  const existing = await db.getFirstAsync<{ imageUri: string | null }>(
+    `SELECT image_uri AS imageUri FROM recipes WHERE id = ?`, [id]
+  );
   await db.runAsync(`DELETE FROM recipes WHERE id = ?`, [id]);
+  if (existing?.imageUri) {
+    deleteRecipeImage(existing.imageUri);
+  }
 }
