@@ -19,10 +19,9 @@ import { getAllRecipes, searchRecipes } from '../repositories/recipeRepository';
 import { getAllTags } from '../repositories/tagRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import type { Category, Recipe, SortOption, Tag } from '../models';
-import SpeedDial from '../components/SpeedDial';
+import { SORT_OPTIONS } from '../models';
 import TagManagerModal from '../components/TagManagerModal';
-import SortMenu from '../components/SortMenu';
-import BackupModal from '../components/BackupModal';
+import SettingsModal from '../components/SettingsModal';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Theme } from '../lib/theme';
 
@@ -129,10 +128,9 @@ export default function RecipeListScreen({
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
-  const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const [backupOpen, setBackupOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { themeName, theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   const searchPanelHeight = useRef(new Animated.Value(0)).current;
   const searchInputRef = useRef<TextInput>(null);
@@ -222,7 +220,7 @@ export default function RecipeListScreen({
 
   const panelMaxHeight = searchPanelHeight.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 260],
+    outputRange: [0, 380],
   });
   const panelOpacity = searchPanelHeight.interpolate({
     inputRange: [0, 0.5, 1],
@@ -232,12 +230,12 @@ export default function RecipeListScreen({
   const themeStyles = getThemeStyles(theme);
 
   const isFiltering = selectedCategoryIds.length > 0 || selectedTagIds.length > 0 || favouritesOnly || query.trim().length > 0;
-  const isNonDefaultSort = sort !== 'date_desc';
 
   const activeCategoryName = selectedCategoryIds.length === 1
     ? categories.find(c => c.id === selectedCategoryIds[0])?.name
     : undefined;
   const filterSummary = [
+    favouritesOnly ? 'Favourites' : null,
     activeCategoryName,
     selectedTagIds.length > 0 ? `${selectedTagIds.length} tag${selectedTagIds.length > 1 ? 's' : ''}` : null,
   ].filter(Boolean).join(', ');
@@ -278,20 +276,12 @@ export default function RecipeListScreen({
           )}
         </View>
         {!searchOpen && (
-          <>
-            <Pressable
-              onPress={() => onFavouritesOnlyChange(!favouritesOnly)}
-              style={[styles.sortButton, { backgroundColor: favouritesOnly ? theme.accent : theme.surfaceMuted }]}
-            >
-              <Feather name="star" size={18} color={favouritesOnly ? theme.surface : theme.textSecondary} />
-            </Pressable>
-            <Pressable
-              onPress={() => setSortMenuOpen(true)}
-              style={[styles.sortButton, { backgroundColor: isNonDefaultSort ? theme.accent : theme.surfaceMuted }]}
-            >
-              <Feather name="sliders" size={18} color={isNonDefaultSort ? theme.surface : theme.textSecondary} />
-            </Pressable>
-          </>
+          <Pressable
+            onPress={() => setSettingsOpen(true)}
+            style={[styles.settingsButton, { backgroundColor: theme.surfaceMuted }]}
+          >
+            <Feather name="settings" size={18} color={theme.textSecondary} />
+          </Pressable>
         )}
       </View>
 
@@ -334,9 +324,9 @@ export default function RecipeListScreen({
           </>
         )}
 
-        {/* Filter by tag */}
+        {/* Filter */}
         <View style={styles.panelLabelRow}>
-          <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Filter by tag</Text>
+          <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Filter</Text>
           <Pressable onPress={() => setManageTagsOpen(true)} hitSlop={8} style={styles.manageTagsButton}>
             <Feather name="edit-2" size={13} color={theme.textSecondary} />
           </Pressable>
@@ -344,8 +334,14 @@ export default function RecipeListScreen({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.panelContent, styles.panelContentLast]}
+          contentContainerStyle={styles.panelContent}
         >
+          <Pressable
+            onPress={() => onFavouritesOnlyChange(!favouritesOnly)}
+            style={[styles.tagChip, themeStyles.tagChip, favouritesOnly && styles.tagChipActive, favouritesOnly && themeStyles.tagChipActive]}
+          >
+            <Feather name="star" size={14} color={favouritesOnly ? theme.accent : theme.textSecondary} />
+          </Pressable>
           {tags.map(tag => {
             const active = selectedTagIds.includes(tag.id);
             return (
@@ -356,6 +352,29 @@ export default function RecipeListScreen({
               >
                 <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
                   {tag.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {/* Sort by */}
+        <Text style={[styles.panelLabel, themeStyles.tagPanelLabel]}>Sort by</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.panelContent, styles.panelContentLast]}
+        >
+          {SORT_OPTIONS.map(option => {
+            const active = sort === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => onSortChange(option.value)}
+                style={[styles.tagChip, themeStyles.tagChip, active && styles.tagChipActive, active && themeStyles.tagChipActive]}
+              >
+                <Text style={[styles.tagChipText, themeStyles.tagChipText, active && styles.tagChipTextActive, active && themeStyles.tagChipTextActive]}>
+                  {option.label}
                 </Text>
               </Pressable>
             );
@@ -385,18 +404,12 @@ export default function RecipeListScreen({
         />
       )}
 
-      <SpeedDial
-        actions={[
-          {
-            label: themeName === 'light' ? 'Dark mode' : 'Light mode',
-            icon: themeName === 'light' ? 'moon' : 'sun',
-            onPress: toggleTheme,
-          },
-          { label: 'New recipe', icon: 'plus', onPress: onCreateRecipe },
-          { label: 'Backup', icon: 'archive', onPress: () => setBackupOpen(true) },
-          ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings' as const, onPress: onOpenDevMode }] : []),
-        ]}
-      />
+      <Pressable
+        style={({ pressed }) => [styles.fab, { backgroundColor: theme.accent }, pressed && styles.fabPressed]}
+        onPress={onCreateRecipe}
+      >
+        <Feather name="plus" size={26} color={theme.surface} />
+      </Pressable>
 
       <TagManagerModal
         visible={manageTagsOpen}
@@ -404,17 +417,11 @@ export default function RecipeListScreen({
         onChange={refreshTags}
       />
 
-      <SortMenu
-        visible={sortMenuOpen}
-        sort={sort}
-        onSelect={onSortChange}
-        onClose={() => setSortMenuOpen(false)}
-      />
-
-      <BackupModal
-        visible={backupOpen}
-        onClose={() => setBackupOpen(false)}
+      <SettingsModal
+        visible={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
         onRestored={handleRestored}
+        onOpenDevMode={onOpenDevMode}
       />
     </Pressable>
   );
@@ -440,7 +447,7 @@ const styles = StyleSheet.create({
   searchRowMain: {
     flex: 1,
   },
-  sortButton: {
+  settingsButton: {
     width: 40,
     height: 40,
     borderRadius: 10,
@@ -535,6 +542,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     borderWidth: 1,
     borderColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tagChipActive: {
     backgroundColor: '#fff',
@@ -647,5 +656,25 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     color: '#555',
+  },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    bottom: 40,
+    right: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  fabPressed: {
+    opacity: 0.75,
   },
 });

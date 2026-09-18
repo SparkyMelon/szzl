@@ -30,12 +30,13 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onRestored: () => void;
+  onOpenDevMode: () => void;
 }
 
 type Busy = 'export' | 'restore' | null;
 
-export default function BackupModal({ visible, onClose, onRestored }: Props) {
-  const { theme } = useTheme();
+export default function SettingsModal({ visible, onClose, onRestored, onOpenDevMode }: Props) {
+  const { themeName, theme, toggleTheme } = useTheme();
   const themeStyles = getThemeStyles(theme);
   const [busy, setBusy] = useState<Busy>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -96,7 +97,22 @@ export default function BackupModal({ visible, onClose, onRestored }: Props) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={[styles.box, themeStyles.modalBox]}>
-          <Text style={[styles.title, themeStyles.modalTitle]}>Backup</Text>
+          <Text style={[styles.title, themeStyles.modalTitle]}>Settings</Text>
+
+          <Pressable
+            style={[styles.row, { borderColor: theme.border }]}
+            onPress={toggleTheme}
+          >
+            <Feather name={themeName === 'light' ? 'moon' : 'sun'} size={20} color={theme.text} />
+            <View style={styles.rowText}>
+              <Text style={[styles.rowTitle, { color: theme.text }]}>
+                {themeName === 'light' ? 'Dark mode' : 'Light mode'}
+              </Text>
+              <Text style={[styles.rowSubtitle, { color: theme.textSecondary }]}>
+                Switch the app's appearance.
+              </Text>
+            </View>
+          </Pressable>
 
           <Pressable
             style={[styles.row, { borderColor: theme.border }]}
@@ -127,6 +143,21 @@ export default function BackupModal({ visible, onClose, onRestored }: Props) {
             </View>
             {busy === 'restore' && <ActivityIndicator color={theme.accent} />}
           </Pressable>
+
+          {__DEV__ && (
+            <Pressable
+              style={[styles.row, { borderColor: theme.border }]}
+              onPress={() => {
+                handleClose();
+                onOpenDevMode();
+              }}
+            >
+              <Feather name="settings" size={20} color={theme.text} />
+              <View style={styles.rowText}>
+                <Text style={[styles.rowTitle, { color: theme.text }]}>Dev mode</Text>
+              </View>
+            </Pressable>
+          )}
 
           {message && (
             <Text style={[styles.message, { color: theme.textSecondary }]}>{message}</Text>
