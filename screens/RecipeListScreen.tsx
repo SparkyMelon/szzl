@@ -22,6 +22,7 @@ import type { Category, Recipe, SortOption, Tag } from '../models';
 import SpeedDial from '../components/SpeedDial';
 import TagManagerModal from '../components/TagManagerModal';
 import SortMenu from '../components/SortMenu';
+import BackupModal from '../components/BackupModal';
 import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, useTheme } from '../lib/theme';
 import type { Theme } from '../lib/theme';
 
@@ -129,6 +130,8 @@ export default function RecipeListScreen({
   const [searchOpen, setSearchOpen] = useState(false);
   const [manageTagsOpen, setManageTagsOpen] = useState(false);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [backupOpen, setBackupOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { themeName, theme, toggleTheme } = useTheme();
 
   const searchPanelHeight = useRef(new Animated.Value(0)).current;
@@ -169,7 +172,12 @@ export default function RecipeListScreen({
       ? searchRecipes(query, selectedTagIds, selectedCategoryIds, sort, favouritesOnly)
       : getAllRecipes(sort);
     fetch.then(setRecipes).finally(() => setLoading(false));
-  }, [query, selectedTagIds, selectedCategoryIds, favouritesOnly, sort]);
+  }, [query, selectedTagIds, selectedCategoryIds, favouritesOnly, sort, refreshTrigger]);
+
+  function handleRestored(): void {
+    refreshTags();
+    setRefreshTrigger(prev => prev + 1);
+  }
 
   function openSearch(): void {
     setSearchOpen(true);
@@ -385,6 +393,7 @@ export default function RecipeListScreen({
             onPress: toggleTheme,
           },
           { label: 'New recipe', icon: 'plus', onPress: onCreateRecipe },
+          { label: 'Backup', icon: 'archive', onPress: () => setBackupOpen(true) },
           ...(__DEV__ ? [{ label: 'Dev mode', icon: 'settings' as const, onPress: onOpenDevMode }] : []),
         ]}
       />
@@ -400,6 +409,12 @@ export default function RecipeListScreen({
         sort={sort}
         onSelect={onSortChange}
         onClose={() => setSortMenuOpen(false)}
+      />
+
+      <BackupModal
+        visible={backupOpen}
+        onClose={() => setBackupOpen(false)}
+        onRestored={handleRestored}
       />
     </Pressable>
   );

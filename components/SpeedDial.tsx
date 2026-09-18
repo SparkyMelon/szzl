@@ -10,7 +10,7 @@ import { useTheme } from '../lib/theme';
 
 // ── SpeedDial ─────────────────────────────────────────────────────
 
-export type SpeedDialIconType = 'plus' | 'settings' | 'sun' | 'moon';
+export type SpeedDialIconType = 'plus' | 'settings' | 'sun' | 'moon' | 'archive';
 
 export interface SpeedDialAction {
   label: string;

@@ -35,3 +35,26 @@ export function deleteRecipeImage(uri: string | null | undefined): void {
     // best effort — a missing/locked file shouldn't block the caller
   }
 }
+
+export interface RecipeImageData {
+  base64: string;
+  extension: string;
+}
+
+export function readRecipeImageAsBase64(uri: string): RecipeImageData | null {
+  try {
+    const file = new File(uri);
+    if (!file.exists) return null;
+    return { base64: file.base64Sync(), extension: file.extension ?? '.jpg' };
+  } catch {
+    return null;
+  }
+}
+
+export function saveRecipeImageFromBase64(base64: string, extension: string): string {
+  ensureImagesDir();
+  const dest = new File(imagesDir, `${Date.now()}-${Math.round(Math.random() * 1e6)}${extension}`);
+  dest.create({ intermediates: true, overwrite: true });
+  dest.write(base64, { encoding: 'base64' });
+  return dest.uri;
+}
