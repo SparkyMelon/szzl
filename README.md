@@ -9,11 +9,13 @@ This is a cookbook app.
   Once a shopping list is complete, should we have a space for "completed" shopping where we can view the recipes available from the shopping list? Makes it easy to look at the recipes we've chosen.
   Add an auto-complete feature to a shopping list & add a button to share a shopping list.
   You should be able to delete shopping lists too, I don't think this needs to be a soft-delete.
+- Soft delete recipes, with a new view to see archived recipes, and an option to unarchive them.
+- A way to send recipes to other people using the app? This should probably skip tags, rating,
+  favourite etc, as that is user-defined. This can be somewhat messy for now, like just text to copy
+  into something.
 
 
 ## Stretch goals
 - Roulette, chose parameters (tags, grouping etc), which will decide on as many recipes as you specify,
   with an easy way to convert this into a shopping list.
-- Soft delete recipes, with a new view to see archived recipes, and an option to unarchive them.
 - Export/back up data, with a feature to import?
-
