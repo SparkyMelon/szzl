@@ -286,7 +286,11 @@ export default function RecipeListScreen({
       </View>
 
       {/* ── Search panel (meal type + tags, visible when search open) ── */}
-      <Animated.View style={[styles.searchPanel, themeStyles.tagPanel, { maxHeight: panelMaxHeight, opacity: panelOpacity }]}>
+      {/* Claims taps on its own empty space so they don't bubble up and close the panel via handleBackgroundPress. */}
+      <Animated.View
+        style={[styles.searchPanel, themeStyles.tagPanel, { maxHeight: panelMaxHeight, opacity: panelOpacity }]}
+        onStartShouldSetResponder={() => true}
+      >
 
         {isFiltering && (
           <View style={styles.clearAllRow}>
