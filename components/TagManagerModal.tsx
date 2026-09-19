@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -11,6 +12,20 @@ import { Feather } from '@expo/vector-icons';
 import { createTag, deleteTag, getAllTags, updateTag } from '../repositories/tagRepository';
 import { getThemeStyles, useTheme } from '../lib/theme';
 import type { Tag } from '../models';
+
+function confirmDeleteTag(name: string): Promise<boolean> {
+  return new Promise(resolve => {
+    Alert.alert(
+      'Delete tag?',
+      `"${name}" will be removed from any recipes that use it. This can't be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+      ],
+      { cancelable: true, onDismiss: () => resolve(false) }
+    );
+  });
+}
 
 interface Props {
   visible: boolean;
@@ -55,8 +70,10 @@ export default function TagManagerModal({ visible, onClose, onChange }: Props) {
     onChange();
   }
 
-  async function handleDelete(id: number): Promise<void> {
-    await deleteTag(id);
+  async function handleDelete(tag: Tag): Promise<void> {
+    const confirmed = await confirmDeleteTag(tag.name);
+    if (!confirmed) return;
+    await deleteTag(tag.id);
     refreshTags();
     onChange();
   }
@@ -103,7 +120,7 @@ export default function TagManagerModal({ visible, onClose, onChange }: Props) {
                       <Feather name="edit-2" size={16} color={theme.textSecondary} />
                     </Pressable>
                   )}
-                  <Pressable onPress={() => handleDelete(tag.id)} hitSlop={8} style={styles.rowButton}>
+                  <Pressable onPress={() => handleDelete(tag)} hitSlop={8} style={styles.rowButton}>
                     <Feather name="trash-2" size={16} color={theme.danger} />
                   </Pressable>
                 </View>
