@@ -8,9 +8,12 @@ import {
   Text,
   View,
 } from 'react-native';
+import Constants from 'expo-constants';
 import { Feather } from '@expo/vector-icons';
 import { exportBackup, hasExistingData, importBackup, pickAndParseBackup, wipeAllData } from '../lib/backup';
 import { getThemeStyles, useTheme } from '../lib/theme';
+
+const appVersion = Constants.expoConfig?.version;
 
 function confirmWipe(): Promise<boolean> {
   return new Promise(resolve => {
@@ -169,6 +172,12 @@ export default function SettingsModal({ visible, onClose, onRestored, onOpenDevM
           >
             <Text style={[styles.doneButtonText, themeStyles.modalButtonCancelText]}>Done</Text>
           </Pressable>
+
+          {appVersion && (
+            <Text style={[styles.versionText, { color: theme.textSecondary }]}>
+              Sizzle v{appVersion}
+            </Text>
+          )}
         </View>
       </View>
     </Modal>
@@ -226,5 +235,11 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  versionText: {
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 14,
+    opacity: 0.6,
   },
 });
