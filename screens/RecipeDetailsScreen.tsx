@@ -659,6 +659,7 @@ const styles = StyleSheet.create({
   // Steps
   stepRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 14,
     paddingVertical: 8,
   },
@@ -669,7 +670,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
     flexShrink: 0,
   },
   stepNumberText: {

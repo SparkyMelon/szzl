@@ -29,6 +29,10 @@ function AppContent() {
   const [sort, setSort] = useState<SortOption>('date_desc');
   const [toast, setToast] = useState<string | null>(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
+  const appOpacity = useRef(new Animated.Value(0)).current;
+  const screenOpacity = useRef(new Animated.Value(1)).current;
+  const screenTranslateY = useRef(new Animated.Value(0)).current;
+  const isFirstScreen = useRef(true);
 
   useEffect(() => {
     runMigrations()
@@ -36,6 +40,27 @@ function AppContent() {
       .then(() => setReady(true))
       .catch((e: unknown) => setError(String(e)));
   }, []);
+
+  useEffect(() => {
+    if (ready) {
+      Animated.timing(appOpacity, { toValue: 1, duration: 280, useNativeDriver: true }).start();
+    }
+  }, [ready, appOpacity]);
+
+  useEffect(() => {
+    // Skip on the very first screen (the app-wide fade-in above already covers it) —
+    // this only animates actual navigation between screens.
+    if (isFirstScreen.current) {
+      isFirstScreen.current = false;
+      return;
+    }
+    screenOpacity.setValue(0);
+    screenTranslateY.setValue(10);
+    Animated.parallel([
+      Animated.timing(screenOpacity, { toValue: 1, duration: 220, useNativeDriver: true }),
+      Animated.timing(screenTranslateY, { toValue: 0, duration: 220, useNativeDriver: true }),
+    ]).start();
+  }, [screen, screenOpacity, screenTranslateY]);
 
   function showToast(message: string): void {
     setToast(message);
@@ -52,59 +77,65 @@ function AppContent() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      {screen.name === 'list' && (
-        <RecipeListScreen
-          onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
-          onCreateRecipe={() => setScreen({ name: 'create' })}
-          onOpenDevMode={() => setDebugVisible(true)}
-          selectedCategoryIds={categoryFilter}
-          onCategoryIdsChange={setCategoryFilter}
-          selectedTagIds={tagFilter}
-          onTagIdsChange={setTagFilter}
-          favouritesOnly={favouritesOnly}
-          onFavouritesOnlyChange={setFavouritesOnly}
-          sort={sort}
-          onSortChange={setSort}
-        />
-      )}
-      {screen.name === 'detail' && (
-        <RecipeDetailScreen
-          recipeId={screen.recipeId}
-          onBack={() => setScreen({ name: 'list' })}
-          onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
-          onDelete={(title) => {
-            setScreen({ name: 'list' });
-            showToast(`"${title}" deleted`);
-          }}
-        />
-      )}
-      {screen.name === 'edit' && (
-        <RecipeFormScreen
-          mode="edit"
-          recipeId={screen.recipeId}
-          onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
-          onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
-        />
-      )}
-      {screen.name === 'create' && (
-        <RecipeFormScreen
-          mode="create"
-          onBack={() => setScreen({ name: 'list' })}
-          onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
-        />
-      )}
-      <StatusBar style={themeName === 'light' ? 'dark' : 'light'} />
-      {__DEV__ && (
-        <DebugScreen
-          visible={debugVisible}
-          onClose={() => setDebugVisible(false)}
-        />
-      )}
-      {toast && (
-        <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
-          <Text style={styles.toastText}>{toast}</Text>
+      <Animated.View style={[styles.container, { opacity: appOpacity }]}>
+        <Animated.View
+          style={[styles.container, { opacity: screenOpacity, transform: [{ translateY: screenTranslateY }] }]}
+        >
+          {screen.name === 'list' && (
+            <RecipeListScreen
+              onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
+              onCreateRecipe={() => setScreen({ name: 'create' })}
+              onOpenDevMode={() => setDebugVisible(true)}
+              selectedCategoryIds={categoryFilter}
+              onCategoryIdsChange={setCategoryFilter}
+              selectedTagIds={tagFilter}
+              onTagIdsChange={setTagFilter}
+              favouritesOnly={favouritesOnly}
+              onFavouritesOnlyChange={setFavouritesOnly}
+              sort={sort}
+              onSortChange={setSort}
+            />
+          )}
+          {screen.name === 'detail' && (
+            <RecipeDetailScreen
+              recipeId={screen.recipeId}
+              onBack={() => setScreen({ name: 'list' })}
+              onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
+              onDelete={(title) => {
+                setScreen({ name: 'list' });
+                showToast(`"${title}" deleted`);
+              }}
+            />
+          )}
+          {screen.name === 'edit' && (
+            <RecipeFormScreen
+              mode="edit"
+              recipeId={screen.recipeId}
+              onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
+              onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
+            />
+          )}
+          {screen.name === 'create' && (
+            <RecipeFormScreen
+              mode="create"
+              onBack={() => setScreen({ name: 'list' })}
+              onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
+            />
+          )}
         </Animated.View>
-      )}
+        <StatusBar style={themeName === 'light' ? 'dark' : 'light'} />
+        {__DEV__ && (
+          <DebugScreen
+            visible={debugVisible}
+            onClose={() => setDebugVisible(false)}
+          />
+        )}
+        {toast && (
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+            <Text style={styles.toastText}>{toast}</Text>
+          </Animated.View>
+        )}
+      </Animated.View>
     </SafeAreaView>
   );
 }

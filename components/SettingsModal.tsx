@@ -175,7 +175,7 @@ export default function SettingsModal({ visible, onClose, onRestored, onOpenDevM
 
           {appVersion && (
             <Text style={[styles.versionText, { color: theme.textSecondary }]}>
-              Sizzle v{appVersion}
+              Sizzle v{appVersion} · Beta
             </Text>
           )}
         </View>
