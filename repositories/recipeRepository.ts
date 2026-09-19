@@ -1,7 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { getDB } from '../lib/database';
 import { deleteRecipeImage } from '../lib/images';
-import type { Category, Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
+import type { Category, IngredientUnit, Recipe, RecipeIngredient, RecipeStep, Tag } from '../models';
 import type { SortOption } from '../models';
 
 const RECIPE_COLUMNS = `
@@ -156,7 +156,7 @@ export interface RecipeCreateInput {
   servings: number | null;
   rating: number | null;
   imageUri: string | null;
-  ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
+  ingredients: Array<{ name: string; quantity: string; unit: IngredientUnit | null }>;
   steps: Array<{ instruction: string }>;
   tagIds: number[];
   categoryIds: number[];
@@ -203,7 +203,7 @@ export interface RecipeUpdateInput {
   servings: number | null;
   rating: number | null;
   imageUri: string | null;
-  ingredients: Array<{ name: string; quantity: string; unit: string | null }>;
+  ingredients: Array<{ name: string; quantity: string; unit: IngredientUnit | null }>;
   steps: Array<{ instruction: string }>;
   tagIds: number[];
   categoryIds: number[];

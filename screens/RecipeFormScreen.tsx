@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -12,7 +13,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { UnitPicker } from '../components/UnitPicker';
-import { createRecipe } from '../repositories/recipeRepository';
+import { createRecipe, getRecipeById, updateRecipe } from '../repositories/recipeRepository';
 import { getAllCategories } from '../repositories/categoryRepository';
 import { getAllTags } from '../repositories/tagRepository';
 import { pickRecipeImage } from '../lib/images';
@@ -33,6 +34,8 @@ interface StepDraft {
 }
 
 interface Props {
+  mode: 'create' | 'edit';
+  recipeId?: number;
   onBack: () => void;
   onSave: (id: number) => void;
 }
@@ -45,9 +48,11 @@ function nextKey(): string {
   return String(++draftKeyCounter);
 }
 
-export default function RecipeCreateScreen({ onBack, onSave }: Props) {
+export default function RecipeFormScreen({ mode, recipeId, onBack, onSave }: Props) {
+  const [loading, setLoading] = useState(mode === 'edit');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [effort, setEffort] = useState<Effort | null>(null);
@@ -55,9 +60,11 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState('');
   const [rating, setRating] = useState<number | null>(null);
+
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([]);
   const [steps, setSteps] = useState<StepDraft[]>([]);
   const [imageUri, setImageUri] = useState<string | null>(null);
+
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
@@ -69,11 +76,46 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   const inputMultilineStyle = [styles.input, styles.inputMultiline, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }];
 
   useEffect(() => {
-    Promise.all([getAllTags(), getAllCategories()]).then(([tags, categories]) => {
-      setAllTags(tags);
-      setAllCategories(categories);
-    });
-  }, []);
+    if (mode === 'edit' && recipeId != null) {
+      Promise.all([getRecipeById(recipeId), getAllTags(), getAllCategories()])
+        .then(([recipe, tags, categories]) => {
+          if (!recipe) {
+            setError('Recipe not found');
+            return;
+          }
+          setTitle(recipe.title);
+          setDescription(recipe.description ?? '');
+          setEffort(recipe.effort);
+          setPrepTime(recipe.prepTime != null ? String(recipe.prepTime) : '');
+          setCookTime(recipe.cookTime != null ? String(recipe.cookTime) : '');
+          setServings(recipe.servings != null ? String(recipe.servings) : '');
+          setRating(recipe.rating);
+          setImageUri(recipe.imageUri);
+          setIngredients(
+            (recipe.ingredients ?? []).map(ing => ({
+              key: nextKey(),
+              name: ing.name,
+              quantity: ing.quantity,
+              unit: ing.unit,
+            }))
+          );
+          setSteps(
+            (recipe.steps ?? []).map(s => ({ key: nextKey(), instruction: s.instruction }))
+          );
+          setAllTags(tags);
+          setAllCategories(categories);
+          setSelectedTagIds((recipe.tags ?? []).map(t => t.id));
+          setSelectedCategoryIds((recipe.categories ?? []).map(c => c.id));
+        })
+        .catch(() => setError('Failed to load recipe'))
+        .finally(() => setLoading(false));
+    } else {
+      Promise.all([getAllTags(), getAllCategories()]).then(([tags, categories]) => {
+        setAllTags(tags);
+        setAllCategories(categories);
+      });
+    }
+  }, [mode, recipeId]);
 
   function addIngredient(): void {
     setIngredients(prev => [...prev, { key: nextKey(), name: '', quantity: '', unit: null }]);
@@ -116,6 +158,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
   }
 
   function handleStarPress(star: number): void {
+    // Tapping the current rating clears it
     setRating(prev => (prev === star ? null : star));
   }
 
@@ -131,34 +174,48 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
     }
     setSaving(true);
     setError(null);
+    const input = {
+      title: title.trim(),
+      description: description.trim() || null,
+      effort,
+      prepTime: prepTime ? parseInt(prepTime, 10) : null,
+      cookTime: cookTime ? parseInt(cookTime, 10) : null,
+      servings: servings ? parseInt(servings, 10) : null,
+      rating,
+      imageUri,
+      ingredients: ingredients
+        .filter(ing => ing.name.trim())
+        .map(ing => ({
+          name: ing.name.trim(),
+          quantity: ing.quantity.trim(),
+          unit: ing.unit,
+        })),
+      steps: steps
+        .filter(s => s.instruction.trim())
+        .map(s => ({ instruction: s.instruction.trim() })),
+      tagIds: selectedTagIds,
+      categoryIds: selectedCategoryIds,
+    };
     try {
-      const id = await createRecipe({
-        title: title.trim(),
-        description: description.trim() || null,
-        effort,
-        prepTime: prepTime ? parseInt(prepTime, 10) : null,
-        cookTime: cookTime ? parseInt(cookTime, 10) : null,
-        servings: servings ? parseInt(servings, 10) : null,
-        rating,
-        imageUri,
-        ingredients: ingredients
-          .filter(ing => ing.name.trim())
-          .map(ing => ({
-            name: ing.name.trim(),
-            quantity: ing.quantity.trim(),
-            unit: ing.unit,
-          })),
-        steps: steps
-          .filter(s => s.instruction.trim())
-          .map(s => ({ instruction: s.instruction.trim() })),
-        tagIds: selectedTagIds,
-        categoryIds: selectedCategoryIds,
-      });
-      onSave(id);
+      if (mode === 'edit' && recipeId != null) {
+        await updateRecipe(recipeId, input);
+        onSave(recipeId);
+      } else {
+        const id = await createRecipe(input);
+        onSave(id);
+      }
     } catch {
       setError('Failed to save. Please try again.');
       setSaving(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.centered, themeStyles.container]}>
+        <ActivityIndicator />
+      </View>
+    );
   }
 
   return (
@@ -172,7 +229,9 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         <Pressable onPress={onBack} style={styles.headerButton}>
           <Text style={[styles.headerButtonText, { color: theme.textSecondary }]}>Cancel</Text>
         </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>New Recipe</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>
+          {mode === 'create' ? 'New Recipe' : 'Edit Recipe'}
+        </Text>
         <Pressable onPress={handleSave} style={styles.headerButton} disabled={saving}>
           <Text style={[styles.headerButtonText, styles.headerButtonSave, { color: theme.text }]}>
             {saving ? 'Saving…' : 'Save'}
@@ -204,7 +263,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
           onChangeText={setTitle}
           placeholder="Recipe name"
           placeholderTextColor={theme.placeholderText}
-          autoFocus
+          autoFocus={mode === 'create'}
         />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Description</Text>
@@ -376,8 +435,8 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Steps</Text>
         {steps.map((step, i) => (
           <View key={step.key} style={styles.listRow}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>{i + 1}</Text>
+            <View style={[styles.stepNumber, themeStyles.stepNumber]}>
+              <Text style={[styles.stepNumberText, themeStyles.stepNumberText]}>{i + 1}</Text>
             </View>
             <TextInput
               style={[styles.input, styles.flex1, styles.inputMultiline, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder, color: theme.text }]}
@@ -402,6 +461,7 @@ export default function RecipeCreateScreen({ onBack, onSave }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -497,10 +557,10 @@ const styles = StyleSheet.create({
   removeButton: { padding: 10, marginTop: 2 },
   removeButtonText: { fontSize: 14, color: '#bbb' },
   stepNumber: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: '#111',
+    width: 28, height: 28, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center', marginTop: 8, flexShrink: 0,
   },
-  stepNumberText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  stepNumberText: { fontSize: 13, fontWeight: '700' },
   addButton: {
     paddingVertical: 12, alignItems: 'center', borderRadius: 10,
     borderWidth: 1, borderColor: '#e0e0e0', marginTop: 4,

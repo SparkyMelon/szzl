@@ -7,8 +7,7 @@ import { runSeeders } from './lib/seeders';
 import DebugScreen from './components/DebugScreen';
 import RecipeListScreen from './screens/RecipeListScreen';
 import RecipeDetailScreen from './screens/RecipeDetailsScreen';
-import RecipeEditScreen from './screens/RecipeEditScreen';
-import RecipeCreateScreen from './screens/RecipeCreateScreen';
+import RecipeFormScreen from './screens/RecipeFormScreen';
 import { ThemeProvider, useTheme } from './lib/theme';
 import type { SortOption } from './models';
 
@@ -54,58 +53,60 @@ function AppContent() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {screen.name === 'list' && (
-            <RecipeListScreen
-              onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
-              onCreateRecipe={() => setScreen({ name: 'create' })}
-              onOpenDevMode={() => setDebugVisible(true)}
-              selectedCategoryIds={categoryFilter}
-              onCategoryIdsChange={setCategoryFilter}
-              selectedTagIds={tagFilter}
-              onTagIdsChange={setTagFilter}
-              favouritesOnly={favouritesOnly}
-              onFavouritesOnlyChange={setFavouritesOnly}
-              sort={sort}
-              onSortChange={setSort}
-            />
-          )}
-          {screen.name === 'detail' && (
-            <RecipeDetailScreen
-              recipeId={screen.recipeId}
-              onBack={() => setScreen({ name: 'list' })}
-              onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
-              onDelete={(title) => {
-                setScreen({ name: 'list' });
-                showToast(`"${title}" deleted`);
-              }}
-            />
-          )}
-          {screen.name === 'edit' && (
-            <RecipeEditScreen
-              recipeId={screen.recipeId}
-              onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
-              onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
-            />
-          )}
-          {screen.name === 'create' && (
-            <RecipeCreateScreen
-              onBack={() => setScreen({ name: 'list' })}
-              onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
-            />
-          )}
-          <StatusBar style={themeName === 'light' ? 'dark' : 'light'} />
-          {__DEV__ && (
-            <DebugScreen
-              visible={debugVisible}
-              onClose={() => setDebugVisible(false)}
-            />
-          )}
-          {toast && (
-            <Animated.View style={[styles.toast, { opacity: toastOpacity }]}> 
-              <Text style={styles.toastText}>{toast}</Text>
-            </Animated.View>
-          )}
-        </SafeAreaView>
-      );
+        <RecipeListScreen
+          onSelectRecipe={(id) => setScreen({ name: 'detail', recipeId: id })}
+          onCreateRecipe={() => setScreen({ name: 'create' })}
+          onOpenDevMode={() => setDebugVisible(true)}
+          selectedCategoryIds={categoryFilter}
+          onCategoryIdsChange={setCategoryFilter}
+          selectedTagIds={tagFilter}
+          onTagIdsChange={setTagFilter}
+          favouritesOnly={favouritesOnly}
+          onFavouritesOnlyChange={setFavouritesOnly}
+          sort={sort}
+          onSortChange={setSort}
+        />
+      )}
+      {screen.name === 'detail' && (
+        <RecipeDetailScreen
+          recipeId={screen.recipeId}
+          onBack={() => setScreen({ name: 'list' })}
+          onEdit={(id) => setScreen({ name: 'edit', recipeId: id })}
+          onDelete={(title) => {
+            setScreen({ name: 'list' });
+            showToast(`"${title}" deleted`);
+          }}
+        />
+      )}
+      {screen.name === 'edit' && (
+        <RecipeFormScreen
+          mode="edit"
+          recipeId={screen.recipeId}
+          onBack={() => setScreen({ name: 'detail', recipeId: screen.recipeId })}
+          onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
+        />
+      )}
+      {screen.name === 'create' && (
+        <RecipeFormScreen
+          mode="create"
+          onBack={() => setScreen({ name: 'list' })}
+          onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
+        />
+      )}
+      <StatusBar style={themeName === 'light' ? 'dark' : 'light'} />
+      {__DEV__ && (
+        <DebugScreen
+          visible={debugVisible}
+          onClose={() => setDebugVisible(false)}
+        />
+      )}
+      {toast && (
+        <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+          <Text style={styles.toastText}>{toast}</Text>
+        </Animated.View>
+      )}
+    </SafeAreaView>
+  );
 }
 
 export default function App() {
