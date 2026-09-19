@@ -25,6 +25,20 @@ describe('tagRepository.getAllTags', () => {
 
     expect(mockGetAllAsync).toHaveBeenCalledWith(expect.stringContaining('ORDER BY name'));
   });
+
+  it('maps the is_default column to a real isDefault boolean', async () => {
+    mockGetAllAsync.mockResolvedValue([
+      { id: 1, name: 'Vegetarian', is_default: 1 },
+      { id: 2, name: 'Homemade', is_default: 0 },
+    ]);
+
+    const tags = await getAllTags();
+
+    expect(tags).toEqual([
+      { id: 1, name: 'Vegetarian', isDefault: true },
+      { id: 2, name: 'Homemade', isDefault: false },
+    ]);
+  });
 });
 
 describe('tagRepository.createTag', () => {

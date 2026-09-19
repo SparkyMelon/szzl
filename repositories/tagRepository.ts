@@ -1,9 +1,16 @@
 import { getDB } from '../lib/database';
 import type { Tag } from '../models';
 
+interface TagRow {
+  id: number;
+  name: string;
+  is_default: number;
+}
+
 export async function getAllTags(): Promise<Tag[]> {
   const db = await getDB();
-  return db.getAllAsync<Tag>(`SELECT * FROM tags ORDER BY name`);
+  const rows = await db.getAllAsync<TagRow>(`SELECT * FROM tags ORDER BY name`);
+  return rows.map(row => ({ id: row.id, name: row.name, isDefault: row.is_default === 1 }));
 }
 
 export async function createTag(name: string): Promise<number> {
