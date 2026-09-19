@@ -51,7 +51,7 @@ function StarRating({ rating, theme }: { rating: number; theme: Theme }) {
 
 function IngredientsTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<string, any> }) {
   if (!recipe.ingredients?.length) {
-    return <Text style={styles.emptyTab}>No ingredients added yet</Text>;
+    return <Text style={[styles.emptyTab, themeStyles.emptyTab]}>No ingredients added yet</Text>;
   }
 
   return (
@@ -72,7 +72,7 @@ function IngredientsTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: 
 
 function StepsTab({ recipe, themeStyles }: { recipe: Recipe; themeStyles: Record<string, any> }) {
   if (!recipe.steps?.length) {
-    return <Text style={styles.emptyTab}>No steps added yet</Text>;
+    return <Text style={[styles.emptyTab, themeStyles.emptyTab]}>No steps added yet</Text>;
   }
 
   return (
@@ -289,7 +289,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
   if (!recipe) {
     return (
       <View style={[styles.centered, themeStyles.container]}>
-        <Text style={[styles.emptyTab, { color: theme.textSecondary }]}>Recipe not found</Text>
+        <Text style={[styles.emptyTab, themeStyles.emptyTab]}>Recipe not found</Text>
       </View>
     );
   }

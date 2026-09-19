@@ -106,6 +106,7 @@ export function getThemeStyles(theme: Theme) {
     tagChipText: { color: theme.textSecondary },
     tagChipTextActive: { color: theme.accent },
     emptyText: { color: theme.textSecondary },
+    emptyTab: { color: theme.textSecondary },
     imagePlaceholder: { backgroundColor: theme.surfaceMuted },
     cardTitle: { color: theme.text },
     tag: { backgroundColor: theme.surfaceMuted },
