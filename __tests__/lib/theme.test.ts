@@ -1,4 +1,4 @@
-import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, themes } from './theme';
+import { EFFORT_COLOURS, EFFORT_LABELS, getThemeStyles, themes } from '../../lib/theme';
 
 describe('theme utilities', () => {
   it('returns styling values that match the selected theme palette', () => {
