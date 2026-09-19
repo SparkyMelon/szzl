@@ -1,3 +1,4 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
 import { getDB } from '../database';
 import { seedCategoriesSql, seedTagsSql } from '../migrations/001_initial';
 
@@ -17,11 +18,11 @@ async function getTagId(name: string): Promise<number | null> {
   return tag?.id ?? null;
 }
 
-async function insertRow(db: any, query: string, params: Array<string | number | null>): Promise<void> {
+async function insertRow(db: SQLiteDatabase, query: string, params: Array<string | number | null>): Promise<void> {
   await db.runAsync(query, params);
 }
 
-async function addRecipeTags(db: any, recipeId: number, tagNames: string[]): Promise<void> {
+async function addRecipeTags(db: SQLiteDatabase, recipeId: number, tagNames: string[]): Promise<void> {
   await Promise.all(tagNames.map(async (tagName) => {
     const tagId = await getTagId(tagName);
     if (tagId) {
@@ -34,7 +35,7 @@ async function addRecipeTags(db: any, recipeId: number, tagNames: string[]): Pro
   }));
 }
 
-async function addRecipeCategories(db: any, recipeId: number, categoryNames: string[]): Promise<void> {
+async function addRecipeCategories(db: SQLiteDatabase, recipeId: number, categoryNames: string[]): Promise<void> {
   await Promise.all(categoryNames.map(async (categoryName) => {
     const categoryId = await getCategoryId(categoryName);
     if (categoryId) {
@@ -74,7 +75,7 @@ type SeedRecipe = {
   categoryNames?: string[];
 };
 
-async function seedRecipe(db: any, recipe: SeedRecipe): Promise<number> {
+async function seedRecipe(db: SQLiteDatabase, recipe: SeedRecipe): Promise<number> {
   const result = await db.runAsync(
     `INSERT INTO recipes (title, description, effort, prep_time, cook_time, servings, rating, is_favourite)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
