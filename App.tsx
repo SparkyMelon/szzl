@@ -19,7 +19,7 @@ type Screen =
   | { name: 'create' };
 
 function AppContent() {
-  const { theme } = useTheme();
+  const { theme, themeName } = useTheme();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
@@ -92,7 +92,7 @@ function AppContent() {
               onSave={(id) => setScreen({ name: 'detail', recipeId: id })}
             />
           )}
-          <StatusBar style="auto" />
+          <StatusBar style={themeName === 'light' ? 'dark' : 'light'} />
           {__DEV__ && (
             <DebugScreen
               visible={debugVisible}
