@@ -12,7 +12,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#C1833D"
+        "backgroundColor": "#D29849"
       },
       "predictiveBackGestureEnabled": false,
       "package": "app.jamesquinton.sizzle"
@@ -35,7 +35,7 @@
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#C1833D"
+          "backgroundColor": "#D29849"
         }
       ]
     ],
