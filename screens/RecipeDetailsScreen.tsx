@@ -4,7 +4,10 @@ import {
   Animated,
   Image,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   Text,
@@ -20,6 +23,8 @@ const HERO_HEIGHT = 280;
 const HEADER_HEIGHT = 60;
 
 type Tab = 'ingredients' | 'steps' | 'info';
+
+const TABS: Tab[] = ['ingredients', 'steps', 'info'];
 
 interface Props {
   recipeId: number;
@@ -166,6 +171,13 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
   const [deleting, setDeleting] = useState(false);
   const { theme } = useTheme();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const pagerRef = useRef<ScrollView>(null);
+  const [pageWidth, setPageWidth] = useState(0);
+  const [tabHeights, setTabHeights] = useState<Record<Tab, number>>({
+    ingredients: 0,
+    steps: 0,
+    info: 0,
+  });
 
   useEffect(() => {
     getRecipeById(recipeId)
@@ -235,6 +247,21 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
     await Share.share({ title: recipe.title, message });
   }
 
+  function handleTabPress(tab: Tab): void {
+    setActiveTab(tab);
+    pagerRef.current?.scrollTo({ x: TABS.indexOf(tab) * pageWidth, animated: true });
+  }
+
+  function handlePagerScrollEnd(e: NativeSyntheticEvent<NativeScrollEvent>): void {
+    if (!pageWidth) return;
+    const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
+    setActiveTab(TABS[index] ?? TABS[0]);
+  }
+
+  function handleTabLayout(tab: Tab, height: number): void {
+    setTabHeights(prev => (prev[tab] === height ? prev : { ...prev, [tab]: height }));
+  }
+
   const heroOpacity = scrollY.interpolate({
     inputRange: [0, HERO_HEIGHT / 2],
     outputRange: [1, 0],
@@ -249,6 +276,7 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
 
   const themeStyles = getThemeStyles(theme);
   const isFav = recipe?.isFavourite === 1;
+  const pagerHeight = Math.max(tabHeights.ingredients, tabHeights.steps, tabHeights.info, 1);
 
   if (loading) {
     return (
@@ -370,11 +398,11 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
           )}
 
           <View style={[styles.tabs, themeStyles.tabs]}>
-            {(['ingredients', 'steps', 'info'] as Tab[]).map(tab => (
+            {TABS.map(tab => (
               <Pressable
                 key={tab}
                 style={[styles.tab, activeTab === tab && styles.tabActive]}
-                onPress={() => setActiveTab(tab)}
+                onPress={() => handleTabPress(tab)}
               >
                 <Text style={[styles.tabText, themeStyles.tabText, activeTab === tab && styles.tabTextActive]}>
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -383,9 +411,30 @@ export default function RecipeDetailScreen({ recipeId, onBack, onEdit, onDelete 
             ))}
           </View>
 
-          {activeTab === 'ingredients' && <IngredientsTab recipe={recipe} themeStyles={themeStyles} />}
-          {activeTab === 'steps' && <StepsTab recipe={recipe} themeStyles={themeStyles} />}
-          {activeTab === 'info' && <InfoTab recipe={recipe} theme={theme} themeStyles={themeStyles} />}
+          <View onLayout={e => setPageWidth(e.nativeEvent.layout.width)}>
+            <ScrollView
+              ref={pagerRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onMomentumScrollEnd={handlePagerScrollEnd}
+              style={{ height: pagerHeight }}
+              contentContainerStyle={{ alignItems: 'flex-start' }}
+            >
+              {pageWidth > 0 && TABS.map(tab => (
+                <View
+                  key={tab}
+                  style={{ width: pageWidth }}
+                  onLayout={e => handleTabLayout(tab, e.nativeEvent.layout.height)}
+                >
+                  {tab === 'ingredients' && <IngredientsTab recipe={recipe} themeStyles={themeStyles} />}
+                  {tab === 'steps' && <StepsTab recipe={recipe} themeStyles={themeStyles} />}
+                  {tab === 'info' && <InfoTab recipe={recipe} theme={theme} themeStyles={themeStyles} />}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
 
         </View>
       </Animated.ScrollView>
