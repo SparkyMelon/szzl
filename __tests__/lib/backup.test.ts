@@ -1,19 +1,22 @@
-import { hasExistingData, importBackup, wipeAllData } from '../../lib/backup';
+import { hasExistingData, importBackup, pickAndParseBackup, wipeAllData } from '../../lib/backup';
 import type { BackupFile } from '../../lib/backup';
 import * as recipeRepository from '../../repositories/recipeRepository';
 import * as tagRepository from '../../repositories/tagRepository';
 import * as categoryRepository from '../../repositories/categoryRepository';
 import * as images from '../../lib/images';
+import * as DocumentPicker from 'expo-document-picker';
 
 jest.mock('../../repositories/recipeRepository');
 jest.mock('../../repositories/tagRepository');
 jest.mock('../../repositories/categoryRepository');
 jest.mock('../../lib/images');
+jest.mock('expo-document-picker');
 
 const mockedRecipeRepo = recipeRepository as jest.Mocked<typeof recipeRepository>;
 const mockedTagRepo = tagRepository as jest.Mocked<typeof tagRepository>;
 const mockedCategoryRepo = categoryRepository as jest.Mocked<typeof categoryRepository>;
 const mockedImages = images as jest.Mocked<typeof images>;
+const mockedDocumentPicker = DocumentPicker as jest.Mocked<typeof DocumentPicker>;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -60,6 +63,47 @@ describe('backup.wipeAllData', () => {
     expect(mockedRecipeRepo.deleteRecipe).toHaveBeenCalledWith(2);
     expect(mockedTagRepo.deleteTag).toHaveBeenCalledWith(11);
     expect(mockedTagRepo.deleteTag).not.toHaveBeenCalledWith(10);
+  });
+});
+
+describe('backup.pickAndParseBackup', () => {
+  function mockPickedFile(contents: string): void {
+    mockedDocumentPicker.getDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'content://backup.json' } as any],
+    } as any);
+    globalThis.fetch = jest.fn().mockResolvedValue({ text: () => Promise.resolve(contents) }) as any;
+  }
+
+  it('returns null when the user cancels the picker', async () => {
+    mockedDocumentPicker.getDocumentAsync.mockResolvedValue({ canceled: true } as any);
+
+    expect(await pickAndParseBackup()).toBeNull();
+  });
+
+  it('returns the parsed backup when it has a valid shape', async () => {
+    const backup: BackupFile = { version: 1, exportedAt: '2024-01-01T00:00:00.000Z', recipes: [] };
+    mockPickedFile(JSON.stringify(backup));
+
+    expect(await pickAndParseBackup()).toEqual(backup);
+  });
+
+  it('rejects a file with the wrong version', async () => {
+    mockPickedFile(JSON.stringify({ version: 2, recipes: [] }));
+
+    await expect(pickAndParseBackup()).rejects.toThrow('not a valid Sizzle backup');
+  });
+
+  it('rejects a file with no recipes array', async () => {
+    mockPickedFile(JSON.stringify({ version: 1 }));
+
+    await expect(pickAndParseBackup()).rejects.toThrow('not a valid Sizzle backup');
+  });
+
+  it('rejects unrelated JSON', async () => {
+    mockPickedFile(JSON.stringify({ hello: 'world' }));
+
+    await expect(pickAndParseBackup()).rejects.toThrow('not a valid Sizzle backup');
   });
 });
 

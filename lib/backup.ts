@@ -81,6 +81,15 @@ export interface RestoreResult {
   imported: number;
 }
 
+function isBackupFile(value: unknown): value is BackupFile {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as BackupFile).version === 1 &&
+    Array.isArray((value as BackupFile).recipes)
+  );
+}
+
 /**
  * Opens the document picker and parses the chosen file. Purely read-only — safe
  * to call before deciding whether any destructive step (wiping existing data) is
@@ -96,7 +105,11 @@ export async function pickAndParseBackup(): Promise<BackupFile | null> {
   // on these). fetch() goes through a different native networking path that
   // Android handles correctly for content:// URIs, cloud-backed or not.
   const contents = await (await fetch(picked.assets[0].uri)).text();
-  return JSON.parse(contents);
+  const parsed: unknown = JSON.parse(contents);
+  if (!isBackupFile(parsed)) {
+    throw new Error('This file is not a valid Sizzle backup.');
+  }
+  return parsed;
 }
 
 /** Whether the app has any recipes or user-created tags that a restore could collide with. */
