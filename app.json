@@ -15,7 +15,7 @@
         "backgroundColor": "#C1833D"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.sparkymelon.szzl"
+      "package": "app.jamesquinton.sizzle"
     },
     "web": {
       "favicon": "./assets/favicon.png"
